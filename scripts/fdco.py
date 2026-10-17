@@ -191,9 +191,11 @@ def predecir(M, H, A):
 REGLA = 'Regla de la app: >5% y al menos 3 casas por encima de lo justo'
 
 
-def regla_app(i, c, k='pps'):
+def regla_app(i, c, k='pps', pmin=0.0):
     """Misma regla que la app: la mejor cuota de las casas conocidas paga >5% sobre Pinnacle (pre) y >=3 casas pagan más de lo justo."""
     ps = c[k][i]
+    if ps < pmin:
+        return None
     ok = [b[i] for b in c['libros'] if b[i] * ps - 1 > 0]
     if len(ok) >= 3 and max(ok) * ps - 1 > 0.05:
         return max(ok)
@@ -206,6 +208,8 @@ def _si(cond, price):
 
 ESTRAT = [
     (REGLA, regla_app),
+    ('Regla de la app, solo prob. Pinnacle >=35% (sin cuotas largas)', lambda i, c: regla_app(i, c, 'pps', 0.35)),
+    ('Regla de la app, solo prob. Pinnacle >=50% (favoritos)', lambda i, c: regla_app(i, c, 'pps', 0.50)),
     ('Regla de la app con margen quitado por potencia', lambda i, c: regla_app(i, c, 'ppw')),
     ('Mejor cuota (Max) vs Pinnacle (pre, potencia) >5%', lambda i, c: _si(c['best'][i] * c['ppw'][i] - 1 > 0.05, c['best'][i])),
     ('Regla de la app y el modelo coincide', lambda i, c: regla_app(i, c) if c['dc'] is not None and c['dc'][i] > c['pps'][i] else None),
