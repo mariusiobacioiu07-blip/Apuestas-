@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Previa de partidos</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#ECEFEA;--card:#F8FAF6;--ink:#1B2A41;--mut:#5D6B60;--line:#C9D1C8;--pitch:#2F6B4F;--flag:#D9453B;--draw:#9AA79C}
+@media (prefers-color-scheme:dark){:root{--bg:#141B16;--card:#1B251E;--ink:#E6ECE4;--mut:#93A296;--line:#2B3A2F;--pitch:#5FB58A;--flag:#F0716A;--draw:#56655A}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Source Sans 3",system-ui,sans-serif}
+main{max-width:640px;margin:0 auto;padding:16px 14px 48px}
+h1{font:700 30px "Barlow Condensed",sans-serif;margin:4px 0 12px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px}
+.chip{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:20px;padding:6px 13px;font:inherit;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--pitch);border-color:var(--pitch);color:#fff}
+.day{font:600 14px "Source Sans 3";color:var(--mut);margin:16px 0 6px}
+.fx{background:var(--card);border:1px solid var(--line);border-radius:8px;margin-bottom:8px}
+.fx>button{all:unset;display:flex;justify-content:space-between;gap:10px;align-items:center;width:100%;padding:12px 14px;cursor:pointer;box-sizing:border-box}
+.fx>button:focus-visible{outline:2px solid var(--pitch);outline-offset:2px}
+.teams{font:700 20px "Barlow Condensed";line-height:1.15}
+.hour{color:var(--mut);font-size:14px;white-space:nowrap}
+.det{padding:4px 14px 14px;border-top:1px solid var(--line)}
+.bar{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:10px 0 4px}
+.bar i{display:block}
+.pc{display:flex;justify-content:space-between;font:700 18px "Barlow Condensed"}
+.adv{color:var(--mut);font-size:14px;margin:4px 0 10px}
+table{width:100%;border-collapse:collapse;margin:6px 0}
+td{padding:5px 0;border-bottom:1px solid var(--line);text-align:center}
+td:first-child{text-align:left;color:var(--mut);font-size:14px}
+.fm span{display:inline-block;width:18px;height:18px;line-height:18px;border-radius:3px;color:#fff;font-size:11px;margin-right:2px}
+.W{background:var(--pitch)}.D{background:var(--draw)}.L{background:var(--flag)}
+h3{font:700 17px "Barlow Condensed";margin:14px 0 4px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:14px}
+.cols b{display:block;margin-bottom:2px}
+.out{color:var(--flag)}
+.ai{background:var(--bg);border-radius:6px;padding:10px;font-size:15px;white-space:pre-wrap}
+.msg{color:var(--mut);padding:10px 0}.err{color:var(--flag)}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .3s}}
+</style>
+</head>
+<body>
+<main>
+<h1>Previa de partidos</h1>
+<div class="chips" id="chips"></div>
+<div id="list"></div>
+</main>
+<script>
+const LIGAS=[["La Liga",140],["Premier",39],["Bundesliga",78],["2. Bundesliga",79],["Serie A",135],["Ligue 1",61],["Liga 1 Rumanía",283],["Liga Portugal",94],["Süper Lig",203],["Eredivisie",88],["Super League Suiza",207],["Pro League Bélgica",144]];
+let cur=null;
+const h=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+const api=async q=>{const r=await fetch('/api/football?'+q);const j=await r.json();if(!r.ok)throw new Error(j.error||'Error');return j};
+
+const chips=document.getElementById('chips'),list=document.getElementById('list');
+LIGAS.forEach(([n,id])=>{const b=h('button','chip',n);b.setAttribute('aria-pressed','false');b.onclick=()=>load(id,b);chips.append(b)});
+
+async function load(id,btn){
+  cur=id;chips.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c===btn));
+  list.replaceChildren(h('div','msg','Cargando partidos…'));
+  try{
+    const fx=await api('action=fixtures&league='+id);
+    list.replaceChildren();
+    if(!fx.length){list.append(h('div','msg','No hay partidos próximos en esta liga.'));return}
+    let last='';
+    fx.forEach(f=>{
+      const d=new Date(f.date),day=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+      if(day!==last){list.append(h('div','day',day));last=day}
+      const card=h('div','fx'),b=h('button');
+      b.append(h('span','teams',f.home.name+' – '+f.away.name),h('span','hour',d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})));
+      const box=h('div','det');box.hidden=true;let done=false;
+      b.onclick=()=>{box.hidden=!box.hidden;if(!box.hidden&&!done){done=true;detail(f,box)}};
+      card.append(b,box);list.append(card);
+    });
+  }catch(e){list.replaceChildren(h('div','msg err',e.message))}
+}
+
+const form=s=>{const w=h('span','fm');[...s].forEach(c=>w.append(h('span',c,c)));return w};
+
+async function detail(f,box){
+  box.append(h('div','msg','Cargando datos…'));
+  try{
+    const d=await api(`action=match&fixture=${f.id}&league=${cur}&home=${f.home.id}&away=${f.away.id}&hn=${encodeURIComponent(f.home.name)}&an=${encodeURIComponent(f.away.name)}`);
+    box.replaceChildren();
+    if(d.pct){
+      const p=[d.pct.home,d.pct.draw,d.pct.away],n=p.map(x=>parseInt(x)||0);
+      const bar=h('div','bar');['var(--pitch)','var(--draw)','var(--flag)'].forEach((c,i)=>{const s=h('i');s.style.cssText=`width:${n[i]}%;background:${c}`;bar.append(s)});
+      const pc=h('div','pc');pc.append(h('span',null,p[0]),h('span',null,'Empate '+p[1]),h('span',null,p[2]));
+      box.append(bar,pc);
+    }
+    if(d.advice)box.append(h('div','adv',d.advice));
+    const t=h('table');
+    const row=(l,a,b)=>{const r=h('tr');r.append(h('td',null,l));[a,b].forEach(v=>{const c=h('td');v instanceof Node?c.append(v):c.textContent=v;r.append(c)});t.append(r)};
+    const s=d.stats;
+    row('',f.home.name,f.away.name);
+    row('Últimos 5',form(s.home.form),form(s.away.form));
+    row('Goles a favor / partido',s.home.gf,s.away.gf);
+    row('Goles en contra / partido',s.home.ga,s.away.ga);
+    row('Porterías a cero',s.home.cs,s.away.cs);
+    row('Partidos sin marcar',s.home.fts,s.away.fts);
+    if(d.comp){row('Ataque',d.comp.att.home,d.comp.att.away);row('Defensa',d.comp.def.home,d.comp.def.away)}
+    box.append(t);
+    box.append(h('h3',null,'Bajas'));
+    const cols=h('div','cols');
+    [['home',f.home.name],['away',f.away.name]].forEach(([k,n])=>{
+      const c=h('div');c.append(h('b',null,n));
+      if(!d.inj[k].length)c.append(h('div','msg','Sin bajas confirmadas'));
+      d.inj[k].forEach(i=>{const e=h('div',i.t==='Missing Fixture'?'out':null,i.n+' · '+(i.r||i.t));c.append(e)});
+      cols.append(c);
+    });
+    box.append(cols);
+    if(d.ai){box.append(h('h3',null,'Resumen'),h('div','ai',d.ai))}
+  }catch(e){box.replaceChildren(h('div','msg err',e.message))}
+}
+</script>
+</body>
+</html>
