@@ -3,83 +3,111 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0A1310">
+<meta name="theme-color" content="#090E1C">
 <title>Previa de partidos</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{color-scheme:dark;--bg:#0A1310;--bg2:#0E1A15;--card:#13221C;--card2:#1A2D25;--line:#22372F;--ink:#EAF2EC;--mut:#8DA396;--acc:#C8F560;--home:#3FD98A;--away:#F5A524;--red:#FF5D6C;--yel:#F2C230}
-*{box-sizing:border-box}
-body{margin:0;color:var(--ink);font:16px/1.45 "Source Sans 3",system-ui,sans-serif;background:radial-gradient(900px 420px at 50% -140px,#1D4331 0,transparent 70%),var(--bg);min-height:100vh}
-main{max-width:640px;margin:0 auto;padding:22px 14px 56px}
-header h1{font:700 52px/1 "Barlow Condensed",sans-serif;color:var(--ink);margin:6px 0 4px;letter-spacing:.01em}
-header h1::after{content:"";display:inline-block;width:11px;height:11px;border-radius:50%;background:var(--acc);margin-left:8px;box-shadow:0 0 16px var(--acc)}
-header p{color:var(--mut);margin:0 0 18px;max-width:34ch}
-.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}
-.chips::-webkit-scrollbar{display:none}
-.chip{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:20px;padding:8px 15px;font:inherit;cursor:pointer;transition:background .15s,border-color .15s}
-.chip:hover{border-color:#35574A}
-.chip[aria-pressed=true]{background:var(--acc);color:#0A1310;border-color:var(--acc);font-weight:600}
-.chip:focus-visible,.fx>button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:14px}
-summary{cursor:pointer;font-weight:600}
-label{display:block;margin:10px 0;font-size:14px;color:var(--mut)}
-input,select{display:block;width:100%;margin-top:4px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg2);color:var(--ink);font:inherit}
-input::placeholder{color:#5d7367}
-.dk{color:var(--ink);background:var(--card2);border-color:var(--line)}
+:root{color-scheme:dark;--bg:#090E1C;--bg2:#0D1426;--card:#111A33;--card2:#162142;--line:#1F2B4D;--ink:#E8ECF7;--mut:#8C97B8;
+--green:#5FD38D;--red:#F0566A;--yellow:#F5C242;--purple:#A35BF2;--acc:#5FD38D;--home:#5FD38D;--away:#F5C242;--pos:#5FD38D;--neg:#F0566A}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;color:var(--ink);font:14px/1.4 "Inter",system-ui,sans-serif;background:var(--bg);min-height:100vh;padding-bottom:calc(66px + env(safe-area-inset-bottom))}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--bg)}
+.clk{display:flex;flex-direction:column;line-height:1.15}
+.clk b{font:600 15px "JetBrains Mono",monospace;color:var(--green);letter-spacing:.03em}
+.clk span{font-size:10.5px;color:var(--mut)}
+.gr{flex:1;text-align:center;font-weight:600;font-size:12px;color:#B9C3E0}
+.brand{font:800 14px "Inter",sans-serif;letter-spacing:-.01em}.brand b{color:var(--green);font-weight:800}
+main{max-width:640px;margin:0 auto;padding:16px 14px 12px}
+.pt{font:800 24px/1.1 "Inter",sans-serif;letter-spacing:-.02em;margin:0 0 14px}
+.pt span{color:var(--green)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.st{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--c);border-radius:14px;padding:12px 13px 11px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.sl{font-size:9.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--mut)}
+.sv{font:800 28px/1 "Inter",sans-serif;color:var(--c);letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:3px;overflow:hidden;text-overflow:ellipsis}
+.ss{font-size:11.5px;color:var(--mut)}
+.cta{display:block;width:100%;border:0;background:var(--green);color:#06120B;border-radius:12px;padding:13px;font:700 15px "Inter",sans-serif;cursor:pointer;margin-bottom:12px}
+.cta:active{transform:scale(.985)}
+.panel,.grp{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden}
+.ph,.gh{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#AEB9D6}
+.pb{padding:13px 14px}
+.pl{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.pl b{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#C2CBE4}
+.pl em{font-style:normal;font-weight:700;color:var(--green);font-size:12px}
+.bar{height:7px;border-radius:4px;background:#1A2445;overflow:hidden;margin:9px 0 8px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),#4DB77C);border-radius:5px}
+.hint{color:var(--mut);font-size:12px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 14px;border-top:1px solid var(--line);font-size:13px}
+.row:first-of-type{border-top:0}
+.row .mn{font:600 12.5px "JetBrains Mono",monospace;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{font:700 12px "JetBrains Mono",monospace;flex:none}
+.g{color:var(--green)}.r{color:var(--red)}.y{color:var(--yellow)}
+details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 14px;margin-bottom:12px}
+summary{cursor:pointer;font-weight:700}
+label{display:block;margin:9px 0;font-size:12.5px;color:var(--mut)}
+input,select{display:block;width:100%;margin-top:5px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--bg2);font-size:14px;color:var(--ink);font:inherit}
+input::placeholder{color:#55618A}
+.chip{flex:none;border:1px solid var(--line);background:var(--card2);color:var(--ink);border-radius:10px;padding:7px 11px;font:600 12.5px "Inter",sans-serif;cursor:pointer}
+.chip:hover{border-color:var(--green)}
+.dk{background:var(--card2)}
 .grp .dk{margin:6px 0}
-.grp{background:var(--card);border:1px solid var(--line);border-radius:18px;margin-bottom:16px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.25)}
-.gh{display:flex;align-items:center;gap:10px;padding:13px 16px;background:linear-gradient(90deg,var(--card2),var(--card))}
-.gh img{width:24px;height:24px;object-fit:contain;flex:none}
-.gd{font:700 19px "Barlow Condensed";letter-spacing:.02em}.gd::first-letter{text-transform:uppercase}
-.gl{margin-left:auto;color:var(--mut);font-size:13px}
+.gd{letter-spacing:.14em}.gd::first-letter{text-transform:uppercase}
+.gh img{width:18px;height:18px;object-fit:contain;flex:none}
+.gl{margin-left:auto;font-weight:500;letter-spacing:.03em;text-transform:none;color:var(--mut);font-size:11px}
 .fx{border-top:1px solid var(--line)}
-.fx>button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:58px 1fr auto;align-items:center;gap:12px;width:100%;padding:14px 16px;cursor:pointer;transition:background .15s}
-.fx>button:hover{background:var(--card2)}
-.tc{text-align:center;border-right:1px solid var(--line);padding-right:12px}
-.tc b{display:block;font:700 22px/1 "Barlow Condensed";color:var(--acc)}
-.tc span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
-.ts{display:flex;flex-direction:column;gap:9px;min-width:0}
-.tm{display:flex;align-items:center;gap:10px;font:700 19px/1.1 "Barlow Condensed";min-width:0}
+.gh+.fx{border-top:0}
+.fx>button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:48px 1fr 24px;align-items:center;gap:10px;width:100%;padding:10px 14px;cursor:pointer}
+.fx>button:active{background:var(--card2)}
+.fx>button:focus-visible,.tab:focus-visible,.chip:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.tc b{display:block;font:600 14.5px/1 "JetBrains Mono",monospace;color:var(--green)}
+.tc span{font-size:10px;color:var(--mut)}
+.ts{display:flex;flex-direction:column;gap:6px;min-width:0}
+.tm{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;min-width:0}
 .tm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tm img{width:26px;height:26px;object-fit:contain;flex:none}
-.go{display:flex;align-items:center}
-.go::after{content:"›";font-size:22px;line-height:1;transition:transform .2s;color:var(--acc)}
-.fx>button[aria-expanded=true] .go::after{transform:rotate(90deg)}
-.det{padding:6px 16px 18px;border-top:1px solid var(--line);background:var(--bg2)}
-.vs{margin:9px 0}
-.vt{display:grid;grid-template-columns:3.2em 1fr 3.2em;text-align:center;align-items:baseline}
-.vt b{font:700 19px "Barlow Condensed"}.vt b:first-child{text-align:left}.vt b:last-child{text-align:right}
-.vt span{font-size:13px;color:var(--mut)}
-.vb{height:6px;border-radius:3px;background:var(--away);overflow:hidden;margin-top:2px}
-.vb i{display:block;height:100%;background:var(--home);transition:width .4s}
-.adv{color:var(--mut);font-size:14px;margin:6px 0 12px}
-h3{font:700 20px "Barlow Condensed";margin:18px 0 6px;color:var(--acc);letter-spacing:.02em}
-.fm span{display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;border-radius:50%;color:#fff;font:600 11px "Source Sans 3";margin:0 1px}
-.W{background:#1F9D61}.D{background:#6B7F73}.L{background:#D8353F}
-.ai{background:var(--card2);border-left:4px solid var(--acc);border-radius:8px;padding:10px 12px;font-size:15px;white-space:pre-wrap;margin-top:8px}
+.tm img{width:20px;height:20px;object-fit:contain;flex:none}
+.go{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--card2)}
+.go::after{content:"";width:7px;height:7px;border-right:2px solid var(--green);border-bottom:2px solid var(--green);transform:translateY(-2px) rotate(45deg);transition:transform .2s}
+.fx>button[aria-expanded=true] .go::after{transform:translateY(2px) rotate(225deg)}
+.det{padding:2px 14px 14px;border-top:1px solid var(--line);background:var(--bg2)}
+h3{font:600 10.5px "Inter",sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:18px 0 8px}
+.vs{margin:8px 0}
+.vt{display:grid;grid-template-columns:4em 1fr 4em;text-align:center;align-items:baseline}
+.vt b{font:700 14px "JetBrains Mono",monospace}.vt b:first-child{text-align:left}.vt b:last-child{text-align:right}
+.vt span{font-size:11.5px;color:var(--mut)}
+.vb{height:6px;border-radius:3px;background:var(--away);overflow:hidden;margin-top:4px}
+.vb i{display:block;height:100%;background:var(--home)}
+.adv{color:var(--mut);font-size:12px;margin:6px 0 12px;white-space:pre-line}
+.fm span{display:inline-block;width:19px;height:19px;line-height:19px;text-align:center;border-radius:50%;color:#fff;font:700 10px "Inter";margin-right:3px}
+.W{background:#1E9E5F}.D{background:#6A7595}.L{background:#D8404F}
+.ai{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--green);border-radius:12px;padding:9px 12px;font-size:13px;white-space:pre-wrap;margin-top:8px}
 .qa{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-.qa .chip{background:var(--card2);font-size:14px;padding:6px 12px}
+.qa .chip{font-size:12px;padding:6px 10px}
 .ask{display:flex;gap:6px}.ask input{margin:0}
-.ask button{flex:none;border:0;background:var(--acc);color:#0A1310;border-radius:10px;padding:0 16px;font:600 15px "Source Sans 3";cursor:pointer}
+.ask button{flex:none;border:0;background:var(--green);color:#06120B;border-radius:10px;padding:0 14px;font:700 13px "Inter",sans-serif;cursor:pointer}
 .msg{color:var(--mut);padding:8px 0}.err{color:#FF8A95}
-.sk{height:78px;border-radius:16px;margin-bottom:12px;background:linear-gradient(90deg,var(--card) 0,var(--card2) 50%,var(--card) 100%);background-size:200% 100%;animation:sh 1.3s linear infinite}
+.sk{height:64px;border-radius:14px;margin-bottom:10px;background:linear-gradient(90deg,var(--card) 0,var(--card2) 50%,var(--card) 100%);background-size:200% 100%;animation:sh 1.3s linear infinite}
 @keyframes sh{to{background-position:-200% 0}}
 .odds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
-.od{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}
-.od b{display:block;font:700 26px/1.1 "Barlow Condensed";color:var(--acc)}
-.od span{display:block;font-size:12px;color:var(--mut)}
-footer{color:#6F8578;font-size:13px;margin-top:28px}
-.adv{white-space:pre-line}
-.vr{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin:6px 0;font-size:14px}
-.vr.ok{border-color:var(--home);box-shadow:inset 3px 0 0 var(--home)}
+.od{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--green);border-radius:11px;padding:9px 4px;text-align:center}
+.od:nth-child(2){border-top-color:var(--yellow)}.od:nth-child(3){border-top-color:var(--purple)}
+.od b{display:block;font:800 20px/1.1 "Inter",sans-serif;font-variant-numeric:tabular-nums}
+.od span{display:block;font-size:10.5px;color:var(--mut)}
+.vr{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:9px 11px;margin:6px 0;font-size:12.5px}
+.vr.ok{border-color:var(--green);box-shadow:inset 3px 0 0 var(--green)}
 .vr button{margin-top:6px}
-@media (prefers-reduced-motion:reduce){.vb i,.sk,.go::after{transition:none;animation:none}}
+footer{color:#5F6B90;font-size:11px;margin-top:10px}
+.chips{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;overflow-x:auto;background:var(--bg);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.tab{all:unset;box-sizing:border-box;flex:none;min-width:64px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 6px 8px;cursor:pointer;color:var(--mut);font:600 10.5px "Inter",sans-serif;border-top:2px solid transparent;margin-top:-1px}
+.tab .ic{font-size:19px;line-height:1}
+.tab[aria-pressed=true]{color:var(--green);border-top-color:var(--green)}
+@media (prefers-reduced-motion:reduce){.sk,.go::after{animation:none;transition:none}}
 </style>
 </head>
 <body>
+<div class="top"><div class="clk"><b id="clk">--:--:--</b><span id="dt"></span></div><div class="gr" id="gr"></div><div class="brand">Previa<b>Pro</b></div></div>
 <main>
-<header><h1>Previa</h1><p>Los datos del partido en una pantalla, antes de decidir nada.</p></header>
-<details id="cfg"><summary>Claves</summary>
+<h1 class="pt" id="pt"></h1>
+<details id="cfg" hidden><summary>Claves</summary>
 <label>football-data.org (obligatoria)<input id="k1" type="password" autocomplete="off" placeholder="Pega tu clave"></label>
 <label>Gemini (resumen, preguntas y búsqueda web)<input id="k2" type="password" autocomplete="off" placeholder="Pega tu clave"></label>
 <label>Grok (opcional)<input id="k3" type="password" autocomplete="off" placeholder="Pega tu clave"></label>
@@ -89,10 +117,10 @@ footer{color:#6F8578;font-size:13px;margin-top:28px}
 <button class="chip dk" id="save">Guardar</button>
 <p class="msg">Se guardan solo en este navegador. Nunca las subas a GitHub.</p>
 </details>
-<div class="chips" id="chips"></div>
 <div id="list"></div>
 <footer>+18. Apostar conlleva riesgo de pérdida. Los datos orientan, no garantizan nada.</footer>
 </main>
+<nav class="chips" id="chips"></nav>
 <script>
 const LIGAS=[["La Liga","PD"],["Premier","PL"],["Bundesliga","BL1"],["Serie A","SA"],["Ligue 1","FL1"],["Eredivisie","DED"],["Liga Portugal","PPL"]];
 const UND={PD:'La_liga',PL:'EPL',BL1:'Bundesliga',SA:'Serie_A',FL1:'Ligue_1'};
@@ -363,12 +391,47 @@ function pintaModelo(box,M,sf,cu,sh,f){
 /* ---------- interfaz ---------- */
 const cfg=document.getElementById('cfg'),K=[1,2,3,4,5,6].map(n=>document.getElementById('k'+n)),KS=['fdkey','gmkey','xkey','xmodel','oddskey','banca'];
 KS.forEach((k,i)=>K[i].value=ls(k));if(!ls('fdkey'))cfg.open=true;
-document.getElementById('save').onclick=()=>{KS.forEach((k,i)=>localStorage.setItem(k,K[i].value.trim()));cfg.open=false};
-const chips=document.getElementById('chips'),list=document.getElementById('list');
-const pulsar=btn=>chips.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c===btn));
-LIGAS.forEach(([n,code])=>{const b=h('button','chip',n);b.setAttribute('aria-pressed','false');b.onclick=()=>load(code,b);chips.append(b)});
-const ob=h('button','chip','Otras ligas y partido libre');ob.setAttribute('aria-pressed','false');ob.onclick=()=>{pulsar(ob);libre()};chips.append(ob);
-const mb=h('button','chip','Mis apuestas');mb.setAttribute('aria-pressed','false');mb.onclick=()=>{pulsar(mb);apuestas()};chips.append(mb);
+document.getElementById('save').onclick=()=>{KS.forEach((k,i)=>localStorage.setItem(k,K[i].value.trim()));cfg.open=false;cfg.hidden=true;T[0].click()};
+const chips=document.getElementById('chips'),list=document.getElementById('list'),pt=document.getElementById('pt');
+const pulsar=btn=>chips.querySelectorAll('.tab').forEach(c=>c.setAttribute('aria-pressed',c===btn));
+const setTitle=(a,b)=>pt.replaceChildren(document.createTextNode(a+' '),h('span',null,b));
+const T=[];
+const mk=(ic,lb,t1,t2,fn,cfgOn)=>{const b=h('button','tab');b.setAttribute('aria-pressed','false');b.append(h('span','ic',ic),h('span',null,lb));
+  b.onclick=()=>{pulsar(b);setTitle(t1,t2);cfg.hidden=!cfgOn;if(cfgOn)cfg.open=true;fn(b)};chips.append(b);T.push(b);return b};
+mk('📊','Inicio','Panel','Previa',()=>inicio());
+const FL={PD:'🇪🇸',PL:'🇬🇧',BL1:'🇩🇪',SA:'🇮🇹',FL1:'🇫🇷',DED:'🇳🇱',PPL:'🇵🇹'};
+LIGAS.forEach(([n,code])=>mk(FL[code],n,'Partidos',n,b=>load(code,b)));
+mk('🔎','Libre','Partido','libre',()=>libre());
+mk('🎟️','Apuestas','Mis','apuestas',()=>apuestas());
+mk('🔑','Claves','Tus','claves',()=>{list.replaceChildren()},true);
+function inicio(){
+  list.replaceChildren();
+  const B=bets(),pend=B.filter(b=>!b.res),done=B.filter(b=>b.res),st=done.reduce((s,b)=>s+b.stake,0),
+    pf=done.reduce((s,b)=>s+(b.res==='G'?b.stake*(b.odd-1):b.res==='P'?-b.stake:0),0),
+    cl=B.filter(b=>b.close),clv=cl.length?cl.reduce((s,b)=>s+(b.odd/b.close-1),0)/cl.length:null,banca=ls('banca');
+  const sc=(c,l,v,s)=>{const d=h('div','st');d.style.setProperty('--c','var(--'+c+')');d.append(h('span','sl',l),h('b','sv',v),h('span','ss',s));return d};
+  const g=h('div','stats');
+  g.append(sc('green','Apuestas pendientes',pend.length,'de '+B.length+' registradas'),
+    sc(pf<0?'red':'green','Beneficio',(pf>=0?'+':'')+pf.toFixed(2),st?'ROI '+(pf/st*100).toFixed(1)+'%':'sin apuestas resueltas'),
+    sc('yellow','CLV medio',clv!=null?(clv*100).toFixed(1)+'%':'n/d',cl.length+' con cuota de cierre'),
+    sc('purple','Banca',banca?banca+' €':'—',banca?'¼ Kelly, máx. 3%':'ponla en Claves'));
+  const cta=h('button','cta','⚽ Ver partidos de hoy');cta.onclick=()=>T[1].click();
+  const p1=h('div','panel');p1.append(h('div','ph','🎯 Validación del método'));
+  const pb=h('div','pb'),n=Math.min(cl.length,100),pl=h('div','pl');pl.append(h('b',null,'Apuestas con CLV'),h('em',null,cl.length+'/100'));
+  const bar=h('div','bar'),i=h('i');i.style.width=n+'%';bar.append(i);
+  pb.append(pl,bar,h('div','hint','Con unas 100 apuestas el CLV empieza a ser fiable. Hasta entonces, sin dinero real.'));p1.append(pb);
+  const p2=h('div','panel');p2.append(h('div','ph','🕒 Últimas apuestas'));
+  if(!B.length)p2.append(h('div','row hint','Aún no hay ninguna. Registra una desde un mercado con valor.'));
+  B.slice(-4).reverse().forEach(b=>{const r=h('div','row');r.append(h('span','mn',b.m+' · '+b.mk),h('span','tag '+(b.res==='G'?'g':b.res==='P'?'r':'y'),'@'+b.odd.toFixed(2)));p2.append(r)});
+  list.append(g,cta,p1,p2);
+}
+const clk=document.getElementById('clk'),dt=document.getElementById('dt'),gr=document.getElementById('gr');
+function tick(){const d=new Date(),p=n=>String(n).padStart(2,'0'),hr=d.getHours();
+  clk.textContent=p(hr)+':'+p(d.getMinutes())+':'+p(d.getSeconds());
+  dt.textContent=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'short',year:'numeric'});
+  gr.textContent=(hr<6||hr>=21?'Buenas noches 🌙':hr<13?'Buenos días ☀️':'Buenas tardes 🌤️')}
+tick();setInterval(tick,1000);
+T[ls('fdkey')?0:T.length-1].click();
 
 const corto=n=>n.replace(/\s+(A?FC|CF)$/,'').replace(/ & Hove Albion/,'').replace(/Wolverhampton Wanderers/,'Wolves');
 async function load(code,btn){
