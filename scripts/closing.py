@@ -28,7 +28,7 @@ def main():
         print('Faltan los secrets FD_TOKEN u ODDS_KEY; no hago nada.')
         return
     ahora = dt.datetime.now(dt.timezone.utc)
-    d1, d2 = ahora.strftime('%Y-%m-%d'), (ahora + dt.timedelta(days=1)).strftime('%Y-%m-%d')
+    d1, d2 = ahora.strftime('%Y-%m-%d'), (ahora + dt.timedelta(days=2)).strftime('%Y-%m-%d')
     fx, _ = get(f'https://api.football-data.org/v4/matches?dateFrom={d1}&dateTo={d2}', {'X-Auth-Token': FD})
     ligas = set()
     for m in fx.get('matches', []):
