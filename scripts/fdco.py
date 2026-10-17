@@ -91,10 +91,13 @@ def backtest(rows, R):
                 best = max([x for x in cu if x] or [0])
                 if not best:
                     continue
-                if (0.4 * ph[i] + 0.6 * pin[i]) * best - 1 > 0.05 and ph[i] > pin[i]:
-                    R['bets'] += 1
-                    R['pf'] += (best - 1) if out[i] else -1
-                    R['clv'] += best / ps[i] - 1
+                for nom, ok in (('mezcla>5%', (0.4 * ph[i] + 0.6 * pin[i]) * best - 1 > 0.05 and ph[i] > pin[i]),
+                                ('linea>2%', pin[i] * best - 1 > 0.02), ('linea>5%', pin[i] * best - 1 > 0.05)):
+                    if ok:
+                        S = R['s'].setdefault(nom, [0, 0, 0])
+                        S[0] += 1
+                        S[1] += (best - 1) if out[i] else -1
+                        S[2] += best / ps[i] - 1
         hist.setdefault(H, []).append((hg, ag, True))
         hist.setdefault(A, []).append((ag, hg, False))
 
@@ -118,10 +121,11 @@ refs = {k: {'cards': avg([(a or 0) + (b or 0) for a, b, _, _ in v]), 'corners': 
 if R['n']:
     print(f"BACKTEST {R['n']} partidos (2 temporadas, 7 ligas)")
     print(f"Brier modelo: {R['bm'] / R['n']:.4f} | Brier Pinnacle cierre: {R['bp'] / R['n']:.4f} (menor = mejor)")
-    if R['bets']:
-        print(f"Apuestas con valor: {R['bets']} | ROI: {R['pf'] / R['bets'] * 100:.1f}% | CLV medio: {R['clv'] / R['bets'] * 100:.1f}%")
+    print('Estrategia | apuestas | ROI | CLV medio')
+    for k, (n, pf, clv) in R['s'].items():
+        print(f"{k} | {n} | {pf / n * 100:.1f}% | {clv / n * 100:.1f}%")
     json.dump(R, open('data/backtest.json', 'w'))
 if not teams:
     raise SystemExit('Sin datos de football-data.co.uk')
-json.dump({'updated': dt.datetime.utcnow().isoformat() + 'Z', 'teams': teams, 'refs': refs}, open('data/fdco.json', 'w'), ensure_ascii=False)
+json.dump({'updated': dt.datetime.now(dt.timezone.utc).isoformat(), 'teams': teams, 'refs': refs}, open('data/fdco.json', 'w'), ensure_ascii=False)
 print(len(teams), 'equipos guardados')
