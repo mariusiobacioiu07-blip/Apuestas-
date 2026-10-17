@@ -162,7 +162,7 @@ async function gem(text,sys,web){
   if(sys)body.systemInstruction={parts:[{text:sys}]};
   if(web)body.tools=[{google_search:{}}];
   const pref=ls('gmodel'),orden=pref?[pref,...MODELOS.filter(x=>x!==pref)]:MODELOS;
-  const fallos=[];
+  const fallos=[];let msg429='';
   for(const m of orden){
     try{
       const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -177,16 +177,17 @@ async function gem(text,sys,web){
       if(/api key not valid|API_KEY_INVALID/i.test(msg)||j?.error?.status==='PERMISSION_DENIED'){gem.fail=true;return 'Clave de Gemini no válida: '+msg}
       let why=msg.slice(0,90);
       if(r.status===404)why='el modelo no existe';
-      else if(r.status===429)why=/limit:\s*0/.test(msg)?'no incluido en el plan gratuito (límite 0)':'cuota agotada'+((msg.match(/retry in ([\d.]+)s/i)||[])[1]?' (reintenta en '+Math.ceil(msg.match(/retry in ([\d.]+)s/i)[1])+' s)':'');
+      else if(r.status===429){if(!msg429)msg429=msg;why=/limit:\s*0/.test(msg)?'no incluido en el plan gratuito (límite 0)':'cuota agotada'+((msg.match(/retry in ([\d.]+)s/i)||[])[1]?' (reintenta en '+Math.ceil(msg.match(/retry in ([\d.]+)s/i)[1])+' s)':'')}
       fallos.push(m+' → '+why);
     }catch(e){fallos.push(m+' → '+e.message)}
   }
   gem.fail=true;
   const reales=fallos.filter(x=>!x.includes('no existe'));
-  return 'Ningún modelo de Gemini respondió.\n'+(reales.length?reales:fallos).join('\n')+(web?'\n\nLa búsqueda web tiene su propio límite gratuito, más bajo que el del texto normal.':'')+'\nSi todo es cuota: espera al reinicio diario (sobre las 9:00 en España) o crea una clave nueva en aistudio.google.com en un proyecto nuevo.';
+  return 'Ningún modelo de Gemini respondió.\n'+(reales.length?reales:fallos).join('\n')+(msg429?'\n\nMensaje exacto de Google: '+msg429.slice(0,300):'')+(web?'\n\nLa búsqueda web tiene su propio límite gratuito, más bajo que el del texto normal.':'')+'\nSi todo es cuota: espera al reinicio diario (sobre las 9:00 en España) o crea una clave nueva en aistudio.google.com en un proyecto nuevo.';
 }
 const MG=['grok-4-fast-reasoning','grok-4-fast','grok-4','grok-3'];
 async function grok(text,sys){
+  grok.fail=false;
   const k=ls('xkey');if(!k)return '';
   const H={'Content-Type':'application/json',Authorization:'Bearer '+k},pref=ls('xmodel');
   let fallo='';
@@ -196,12 +197,22 @@ async function grok(text,sys){
       const j=await r.json();
       const t=j.output_text||(j.output||[]).flatMap(o=>o.content||[]).map(c=>c.text).filter(Boolean).join('\n');
       if(t)return t;
+      grok.fail=true;
       const msg=typeof j.error==='string'?j.error:(j.error?.message||j.message||'Respuesta vacía');
-      if(r.status===401||r.status===403)return 'Clave de Grok no válida: '+msg;
+      if(r.status===401||r.status===403){grok.fail=true;return 'Clave de Grok no válida: '+msg}
       fallo=m+': '+msg;
     }catch(e){fallo=m+': '+e.message}
   }
+  grok.fail=true;
   return 'Ningún modelo de Grok respondió. Último error → '+fallo;
+}
+async function ia(text,sys,web){
+  const r=await gem(text,sys,web);
+  if(r&&!gem.fail)return r;
+  if(!ls('xkey'))return r;
+  const g=await grok(text,sys);
+  if(g&&!grok.fail)return 'Gemini falló; respuesta de Grok:\n\n'+g;
+  return (r?r+'\n\n':'')+(g||'');
 }
 const BUSCA='Eres un analista de datos de fútbol. Busca en la web y responde en español. No inventes cifras: si no encuentras un dato escribe "no encontrado". Indica la fuente y la fecha de los datos importantes. No des apuestas ni marcador.';
 const REGLAS='Eres un analista de fútbol prudente. Responde en español, claro y en máximo 8 líneas. Usa SOLO los datos JSON del partido. Si incluyen informes o bajas obtenidos de la web, úsalos pero avisa de que no están verificados. Propón un mercado (1X2, doble oportunidad, más/menos goles, ambos marcan, hándicap) únicamente si al menos dos datos concretos lo respaldan, y cítalos (xG, goles, local/visitante, bajas). Si los datos no bastan o faltan, dilo en vez de forzar una apuesta. Si el usuario no da cuotas, aclara que no puedes saber si hay valor, solo si los datos lo respaldan. Nunca hables de apuestas seguras ni prometas ganancias.';
@@ -257,7 +268,7 @@ function preguntas(box,ctx){
   const ask=async t=>{
     if(!t.trim())return;out.hidden=false;out.textContent='Pensando…';
     const q=`Pregunta: ${t}\nDatos del partido:\n${JSON.stringify(ctx)}`;
-    let r=await gem(q,REGLAS);if(!r)r=await grok(q,REGLAS);
+    const r=await ia(q,REGLAS);
     out.textContent=r||'Añade tu clave de Gemini o Grok en "Claves".';
   };
   const qa=h('div','qa');
@@ -291,7 +302,7 @@ async function detail(f,box){
     bb.onclick=async()=>{
       bo.hidden=false;bo.textContent='Buscando…';
       const q=`Bajas, lesionados, sancionados y dudas confirmados para el partido ${f.home.name} vs ${f.away.name}. Para cada equipo lista jugador, motivo y fuente. Si no hay información fiable escribe "no encontrado".`;
-      const r=await(ls('gmkey')?gem(q,BUSCA,true):grok(q,BUSCA));
+      const r=await ia(q,BUSCA,true);
       bo.textContent=r||'Añade tu clave de Gemini o Grok en "Claves".';ctx.bajasWeb=r;
     };
     box.append(bb,bo);
