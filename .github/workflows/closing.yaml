@@ -1,0 +1,26 @@
+name: Cierre Pinnacle
+on:
+  schedule:
+    - cron: '*/15 11-22 * * *'   # cada 15 min de 11:00 a 22:59 UTC
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: datos
+  cancel-in-progress: false
+jobs:
+  cierre:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/closing.py
+        env:
+          FD_TOKEN: ${{ secrets.FD_TOKEN }}
+          ODDS_KEY: ${{ secrets.ODDS_KEY }}
+      - name: Guardar JSON
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add data/closing.json 2>/dev/null || true
+          git diff --staged --quiet || (git commit -m "Cierre Pinnacle" && git pull --rebase && git push)
