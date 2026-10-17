@@ -3,63 +3,69 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#154631">
+<meta name="theme-color" content="#0A1310">
 <title>Previa de partidos</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root{--g1:#154631;--g2:#18503a;--chalk:#F3F1E7;--ink:#10231A;--mut:#5E6B60;--line:#D9D6C6;--home:#1D5A3A;--away:#D69A1F;--draw:#BDBFB1;--red:#D8353F;--yel:#F2C230}
+:root{color-scheme:dark;--bg:#0A1310;--bg2:#0E1A15;--card:#13221C;--card2:#1A2D25;--line:#22372F;--ink:#EAF2EC;--mut:#8DA396;--acc:#C8F560;--home:#3FD98A;--away:#F5A524;--red:#FF5D6C;--yel:#F2C230}
 *{box-sizing:border-box}
-body{margin:0;color:var(--ink);font:16px/1.45 "Source Sans 3",system-ui,sans-serif;background:repeating-linear-gradient(180deg,var(--g1) 0 96px,var(--g2) 96px 192px)}
-main{max-width:640px;margin:0 auto;padding:20px 14px 56px}
-header h1{font:700 56px/1 "Barlow Condensed",sans-serif;color:var(--chalk);margin:6px 0 4px}
-header p{color:#C9D8CC;margin:0 0 16px;max-width:30ch}
-.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px}
-.chip{flex:none;border:1px solid rgba(243,241,231,.35);background:rgba(243,241,231,.08);color:var(--chalk);border-radius:20px;padding:7px 14px;font:inherit;cursor:pointer}
-.chip[aria-pressed=true]{background:var(--chalk);color:var(--ink);border-color:var(--chalk);font-weight:600}
-.chip:focus-visible,.fx>button:focus-visible,input:focus-visible{outline:2px solid var(--yel);outline-offset:2px}
-details{background:var(--chalk);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+body{margin:0;color:var(--ink);font:16px/1.45 "Source Sans 3",system-ui,sans-serif;background:radial-gradient(900px 420px at 50% -140px,#1D4331 0,transparent 70%),var(--bg);min-height:100vh}
+main{max-width:640px;margin:0 auto;padding:22px 14px 56px}
+header h1{font:700 52px/1 "Barlow Condensed",sans-serif;color:var(--ink);margin:6px 0 4px;letter-spacing:.01em}
+header h1::after{content:"";display:inline-block;width:11px;height:11px;border-radius:50%;background:var(--acc);margin-left:8px;box-shadow:0 0 16px var(--acc)}
+header p{color:var(--mut);margin:0 0 18px;max-width:34ch}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:20px;padding:8px 15px;font:inherit;cursor:pointer;transition:background .15s,border-color .15s}
+.chip:hover{border-color:#35574A}
+.chip[aria-pressed=true]{background:var(--acc);color:#0A1310;border-color:var(--acc);font-weight:600}
+.chip:focus-visible,.fx>button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:14px}
 summary{cursor:pointer;font-weight:600}
 label{display:block;margin:10px 0;font-size:14px;color:var(--mut)}
-input{display:block;width:100%;margin-top:4px;padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font:inherit}
-details .chip{color:var(--ink);background:#fff;border-color:var(--line)}
-.day{font:600 18px "Barlow Condensed";color:var(--chalk);margin:20px 0 8px;text-transform:capitalize;letter-spacing:.02em}
-.fx{background:var(--chalk);border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.25)}
-.fx>button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;width:100%;padding:14px;cursor:pointer}
-.tm{display:flex;align-items:center;gap:8px;font:700 19px/1.1 "Barlow Condensed"}
-.tm.r{flex-direction:row-reverse;text-align:right}
-.tm img{width:30px;height:30px;object-fit:contain;flex:none}
-.hr{font:700 22px "Barlow Condensed";background:var(--ink);color:var(--chalk);border-radius:6px;padding:3px 9px}
-.det{padding:6px 16px 18px;border-top:2px dashed var(--line)}
-.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:14px 0 6px}
-.bar i{display:block;transition:width .4s}
-.pc{display:flex;justify-content:space-between;font:700 24px "Barlow Condensed"}
-.pc small{font:400 13px "Source Sans 3";color:var(--mut);display:block;text-align:center}
-.adv{color:var(--mut);font-size:14px;margin:6px 0 12px}
-h3{font:700 20px "Barlow Condensed";margin:18px 0 6px}
+input,select{display:block;width:100%;margin-top:4px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg2);color:var(--ink);font:inherit}
+input::placeholder{color:#5d7367}
+.dk{color:var(--ink);background:var(--card2);border-color:var(--line)}
+.grp .dk{margin:6px 0}
+.grp{background:var(--card);border:1px solid var(--line);border-radius:18px;margin-bottom:16px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.gh{display:flex;align-items:center;gap:10px;padding:13px 16px;background:linear-gradient(90deg,var(--card2),var(--card))}
+.gh img{width:24px;height:24px;object-fit:contain;flex:none}
+.gd{font:700 19px "Barlow Condensed";letter-spacing:.02em}.gd::first-letter{text-transform:uppercase}
+.gl{margin-left:auto;color:var(--mut);font-size:13px}
+.fx{border-top:1px solid var(--line)}
+.fx>button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:58px 1fr auto;align-items:center;gap:12px;width:100%;padding:14px 16px;cursor:pointer;transition:background .15s}
+.fx>button:hover{background:var(--card2)}
+.tc{text-align:center;border-right:1px solid var(--line);padding-right:12px}
+.tc b{display:block;font:700 22px/1 "Barlow Condensed";color:var(--acc)}
+.tc span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.ts{display:flex;flex-direction:column;gap:9px;min-width:0}
+.tm{display:flex;align-items:center;gap:10px;font:700 19px/1.1 "Barlow Condensed";min-width:0}
+.tm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tm img{width:26px;height:26px;object-fit:contain;flex:none}
+.go{display:flex;align-items:center}
+.go::after{content:"›";font-size:22px;line-height:1;transition:transform .2s;color:var(--acc)}
+.fx>button[aria-expanded=true] .go::after{transform:rotate(90deg)}
+.det{padding:6px 16px 18px;border-top:1px solid var(--line);background:var(--bg2)}
 .vs{margin:9px 0}
 .vt{display:grid;grid-template-columns:3.2em 1fr 3.2em;text-align:center;align-items:baseline}
 .vt b{font:700 19px "Barlow Condensed"}.vt b:first-child{text-align:left}.vt b:last-child{text-align:right}
 .vt span{font-size:13px;color:var(--mut)}
 .vb{height:6px;border-radius:3px;background:var(--away);overflow:hidden;margin-top:2px}
-.vb i{display:block;height:100%;background:var(--home)}
+.vb i{display:block;height:100%;background:var(--home);transition:width .4s}
+.adv{color:var(--mut);font-size:14px;margin:6px 0 12px}
+h3{font:700 20px "Barlow Condensed";margin:18px 0 6px;color:var(--acc);letter-spacing:.02em}
 .fm span{display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;border-radius:50%;color:#fff;font:600 11px "Source Sans 3";margin:0 1px}
-.W{background:var(--home)}.D{background:#8A8E80}.L{background:var(--red)}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:14px}
-.cols b{display:block;margin-bottom:4px}
-.pl{display:inline-block;border-radius:5px;padding:2px 7px;margin:0 4px 4px 0;background:var(--yel);color:var(--ink)}
-.pl.o{background:var(--red);color:#fff}
-.ai{background:#fff;border-left:4px solid var(--home);border-radius:6px;padding:10px 12px;font-size:15px;white-space:pre-wrap;margin-top:8px}
+.W{background:#1F9D61}.D{background:#6B7F73}.L{background:#D8353F}
+.ai{background:var(--card2);border-left:4px solid var(--acc);border-radius:8px;padding:10px 12px;font-size:15px;white-space:pre-wrap;margin-top:8px}
 .qa{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-.qa .chip{color:var(--ink);background:#fff;border-color:var(--line);font-size:14px;padding:6px 11px}
+.qa .chip{background:var(--card2);font-size:14px;padding:6px 12px}
 .ask{display:flex;gap:6px}.ask input{margin:0}
-.ask button{flex:none;border:0;background:var(--ink);color:var(--chalk);border-radius:8px;padding:0 16px;font:600 15px "Source Sans 3";cursor:pointer}
-.msg{color:var(--mut);padding:8px 0}.err{color:var(--red)}
-header~#list>.msg{color:#C9D8CC}header~#list>.err{color:#FFB3B8}
-footer{color:#9DB3A2;font-size:13px;margin-top:28px}
-@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
-select{display:block;width:100%;margin-top:4px;padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font:inherit}
-.dk{color:var(--ink);background:#fff;border-color:var(--line)}
-.fx .dk{margin:6px 0}
+.ask button{flex:none;border:0;background:var(--acc);color:#0A1310;border-radius:10px;padding:0 16px;font:600 15px "Source Sans 3";cursor:pointer}
+.msg{color:var(--mut);padding:8px 0}.err{color:#FF8A95}
+.sk{height:78px;border-radius:16px;margin-bottom:12px;background:linear-gradient(90deg,var(--card) 0,var(--card2) 50%,var(--card) 100%);background-size:200% 100%;animation:sh 1.3s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+footer{color:#6F8578;font-size:13px;margin-top:28px}
+@media (prefers-reduced-motion:reduce){.vb i,.sk,.go::after{transition:none;animation:none}}
 </style>
 </head>
 <body>
@@ -127,7 +133,7 @@ function last5(ms,team){
 async function fixtures(code){
   const d1=new Date().toISOString().slice(0,10),d2=new Date(Date.now()+14*864e5).toISOString().slice(0,10);
   const j=await fd(`/competitions/${code}/matches?dateFrom=${d1}&dateTo=${d2}`,6*HR);
-  return (j.matches||[]).filter(m=>m.status==='SCHEDULED'||m.status==='TIMED').slice(0,12).map(m=>({id:m.id,date:m.utcDate,home:{id:m.homeTeam.id,name:m.homeTeam.name,logo:m.homeTeam.crest},away:{id:m.awayTeam.id,name:m.awayTeam.name,logo:m.awayTeam.crest}}));
+  return (j.matches||[]).filter(m=>m.status==='SCHEDULED'||m.status==='TIMED').slice(0,12).map(m=>({id:m.id,date:m.utcDate,comp:m.competition?.emblem,compName:m.competition?.name,home:{id:m.homeTeam.id,name:m.homeTeam.name,logo:m.homeTeam.crest},away:{id:m.awayTeam.id,name:m.awayTeam.name,logo:m.awayTeam.crest}}));
 }
 async function previa(f,code){
   const hit=cget('p1:'+f.id,12*HR);if(hit)return hit;
@@ -144,18 +150,19 @@ async function previa(f,code){
     out.fuenteXg='Understat';
   }
   out.ai=await gem(`Resume en español, en máximo 5 líneas, la previa de ${f.home.name} vs ${f.away.name} usando SOLO estos datos. Destaca tendencias. No des marcador exacto ni recomiendes apuestas.\n${JSON.stringify(out)}`);
-  cset('p1:'+f.id,out);return out;
+  if(!gem.fail)cset('p1:'+f.id,out);return out;
 }
 
 /* ---------- IA ---------- */
-const MODELOS=['gemini-3.8-flash','gemini-3.8-flash-lite','gemini-3.7-flash','gemini-3.6-flash','gemini-3.5-flash','gemini-3.5-flash-lite','gemini-3.1-flash-lite','gemini-3-flash-preview','gemini-2.5-flash','gemini-2.5-flash-lite','gemini-flash-latest','gemini-flash-lite-latest'];
+const MODELOS=['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-flash-latest','gemini-flash-lite-latest','gemini-3.8-flash','gemini-3.8-flash-lite','gemini-3.7-flash','gemini-3.6-flash','gemini-3.5-flash','gemini-3.5-flash-lite','gemini-3.1-flash-lite','gemini-3-flash-preview'];
 async function gem(text,sys,web){
+  gem.fail=false;
   const k=ls('gmkey');if(!k)return '';
   const body={contents:[{parts:[{text}]}]};
   if(sys)body.systemInstruction={parts:[{text:sys}]};
   if(web)body.tools=[{google_search:{}}];
   const pref=ls('gmodel'),orden=pref?[pref,...MODELOS.filter(x=>x!==pref)]:MODELOS;
-  let fallo='';
+  const fallos=[];
   for(const m of orden){
     try{
       const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -167,11 +174,16 @@ async function gem(text,sys,web){
         return t+(fu.length?'\n\nFuentes: '+fu.join(', '):'');
       }
       const msg=j?.error?.message||'Respuesta vacía';
-      if(/api key|permission/i.test(msg)||j?.error?.status==='PERMISSION_DENIED')return 'Clave de Gemini no válida: '+msg;
-      fallo=m+': '+msg;
-    }catch(e){fallo=m+': '+e.message}
+      if(/api key not valid|API_KEY_INVALID/i.test(msg)||j?.error?.status==='PERMISSION_DENIED'){gem.fail=true;return 'Clave de Gemini no válida: '+msg}
+      let why=msg.slice(0,90);
+      if(r.status===404)why='el modelo no existe';
+      else if(r.status===429)why=/limit:\s*0/.test(msg)?'no incluido en el plan gratuito (límite 0)':'cuota agotada'+((msg.match(/retry in ([\d.]+)s/i)||[])[1]?' (reintenta en '+Math.ceil(msg.match(/retry in ([\d.]+)s/i)[1])+' s)':'');
+      fallos.push(m+' → '+why);
+    }catch(e){fallos.push(m+' → '+e.message)}
   }
-  return 'Ningún modelo de Gemini respondió. Último error → '+fallo;
+  gem.fail=true;
+  const reales=fallos.filter(x=>!x.includes('no existe'));
+  return 'Ningún modelo de Gemini respondió.\n'+(reales.length?reales:fallos).join('\n')+(web?'\n\nLa búsqueda web tiene su propio límite gratuito, más bajo que el del texto normal.':'')+'\nSi todo es cuota: espera al reinicio diario (sobre las 9:00 en España) o crea una clave nueva en aistudio.google.com en un proyecto nuevo.';
 }
 const MG=['grok-4-fast-reasoning','grok-4-fast','grok-4','grok-3'];
 async function grok(text,sys){
@@ -203,24 +215,31 @@ const pulsar=btn=>chips.querySelectorAll('.chip').forEach(c=>c.setAttribute('ari
 LIGAS.forEach(([n,code])=>{const b=h('button','chip',n);b.setAttribute('aria-pressed','false');b.onclick=()=>load(code,b);chips.append(b)});
 const ob=h('button','chip','Otras ligas y partido libre');ob.setAttribute('aria-pressed','false');ob.onclick=()=>{pulsar(ob);libre()};chips.append(ob);
 
+const corto=n=>n.replace(/\s+(A?FC|CF)$/,'').replace(/ & Hove Albion/,'').replace(/Wolverhampton Wanderers/,'Wolves');
 async function load(code,btn){
   cur=code;pulsar(btn);
-  list.replaceChildren(h('div','msg','Cargando partidos…'));
+  list.replaceChildren(h('div','sk'),h('div','sk'),h('div','sk'));
   try{
     const fx=await fixtures(code);
     list.replaceChildren();
     if(!fx.length){list.append(h('div','msg','No hay partidos programados en los próximos 14 días.'));return}
-    let last='';
+    let last='',grp=null;const hoy=new Date().toDateString();
     fx.forEach(f=>{
       const d=new Date(f.date),day=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
-      if(day!==last){list.append(h('div','day',day));last=day}
-      const card=h('div','fx'),b=h('button');
-      const t1=h('span','tm');t1.append(logo(f.home.logo),h('span',null,f.home.name));
-      const t2=h('span','tm r');t2.append(logo(f.away.logo),h('span',null,f.away.name));
-      b.append(t1,h('span','hr',d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})),t2);
+      if(day!==last){
+        last=day;grp=h('div','grp');
+        const gh=h('div','gh');if(f.comp)gh.append(logo(f.comp));
+        gh.append(h('span','gd',day),h('span','gl',f.compName||''));grp.append(gh);list.append(grp);
+      }
+      const card=h('div','fx'),b=h('button');b.setAttribute('aria-expanded','false');
+      const tc=h('span','tc');tc.append(h('b',null,d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})),h('span',null,d.toDateString()===hoy?'Hoy':''));
+      const t1=h('span','tm');t1.append(logo(f.home.logo),h('span',null,corto(f.home.name)));
+      const t2=h('span','tm');t2.append(logo(f.away.logo),h('span',null,corto(f.away.name)));
+      const ts=h('span','ts');ts.append(t1,t2);
+      b.append(tc,ts,h('span','go'));
       const box=h('div','det');box.hidden=true;let done=false;
-      b.onclick=()=>{box.hidden=!box.hidden;if(!box.hidden&&!done){done=true;detail(f,box)}};
-      card.append(b,box);list.append(card);
+      b.onclick=()=>{box.hidden=!box.hidden;b.setAttribute('aria-expanded',String(!box.hidden));if(!box.hidden&&!done){done=true;detail(f,box)}};
+      card.append(b,box);grp.append(card);
     });
   }catch(e){list.replaceChildren(h('div','msg err',e.message))}
 }
@@ -282,7 +301,7 @@ async function detail(f,box){
 
 function libre(){
   list.replaceChildren();
-  const box=h('div','fx');box.style.padding='16px';
+  const box=h('div','grp');box.style.padding='16px';
   box.append(h('p','adv','Para 2. Bundesliga, Rumanía, Turquía, Suiza, Bélgica o cualquier otro partido: la IA busca los datos en la web. Pueden tener errores, contrasta lo importante.'));
   const l1=h('label',null,'Partido'),inp=h('input');inp.placeholder='Ej: Galatasaray vs Fenerbahçe';l1.append(inp);
   const l2=h('label',null,'IA'),sel=h('select');
