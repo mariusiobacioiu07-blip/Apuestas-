@@ -1,7 +1,9 @@
-// Subir a GitHub como: api/understat.js  (Vercel la publica en /api/understat)
-// Lee los datos que Understat incluye en la página de cada liga. No es una API oficial:
-// si Understat cambia su web, esta función devolverá un error y la app usará API-Football.
+// Subir a GitHub como: api/understat.js  (sustituye al anterior)
+// Understat ya no incluye los datos en el HTML: ahora los sirve por un endpoint interno
+// (/getLeagueData/LIGA/AÑO) que exige la cookie de la portada y la cabecera X-Requested-With.
 const LIGAS = ['EPL', 'La_liga', 'Bundesliga', 'Serie_A', 'Ligue_1'];
+const BASE = 'https://understat.com';
+const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 
 const media = (a, k) =>
   a.length ? +(a.reduce((s, x) => s + parseFloat(x[k]), 0) / a.length).toFixed(2) : null;
@@ -11,18 +13,28 @@ module.exports = async (req, res) => {
   try {
     if (!LIGAS.includes(league) || !/^\d{4}$/.test(season || '')) throw new Error('Parámetros no válidos');
 
-    const r = await fetch(`https://understat.com/league/${league}/${season}`, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept-Language': 'en' },
+    // 1) cookies de la portada
+    const home = await fetch(BASE, { headers: { 'User-Agent': UA, 'Accept-Language': 'en' } });
+    const cookie = (home.headers.getSetCookie?.() || []).map((c) => c.split(';')[0]).join('; ');
+
+    // 2) datos de la liga
+    const r = await fetch(`${BASE}/getLeagueData/${league}/${season}`, {
+      headers: {
+        'User-Agent': UA,
+        'X-Requested-With': 'XMLHttpRequest',
+        Accept: 'application/json, text/javascript, */*; q=0.01',
+        Referer: `${BASE}/league/${league}/${season}`,
+        ...(cookie ? { Cookie: cookie } : {}),
+      },
     });
     if (!r.ok) throw new Error('Understat respondió ' + r.status);
-    const html = await r.text();
-
-    const m = html.match(/teamsData\s*=\s*JSON\.parse\('([^']+)'\)/);
-    if (!m) throw new Error('Understat cambió su web: no encuentro teamsData');
-    const data = JSON.parse(m[1].replace(/\\x([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16))));
+    const txt = await r.text();
+    let data;
+    try { data = JSON.parse(txt); } catch { throw new Error('Understat no devolvió JSON: ' + txt.slice(0, 80)); }
+    if (!data.teams) throw new Error('Respuesta sin campo teams. Campos: ' + Object.keys(data).join(','));
 
     const teams = {};
-    for (const t of Object.values(data)) {
+    for (const t of Object.values(data.teams)) {
       const hist = [...t.history].sort((a, b) => (a.date < b.date ? -1 : 1));
       const l5 = hist.slice(-5);
       const casa = hist.filter((x) => x.h_a === 'h');
