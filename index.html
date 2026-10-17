@@ -3,55 +3,150 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#154631">
 <title>Previa de partidos</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#ECEFEA;--card:#F8FAF6;--ink:#1B2A41;--mut:#5D6B60;--line:#C9D1C8;--pitch:#2F6B4F;--flag:#D9453B;--draw:#9AA79C}
-@media (prefers-color-scheme:dark){:root{--bg:#141B16;--card:#1B251E;--ink:#E6ECE4;--mut:#93A296;--line:#2B3A2F;--pitch:#5FB58A;--flag:#F0716A;--draw:#56655A}}
+:root{--g1:#154631;--g2:#18503a;--chalk:#F3F1E7;--ink:#10231A;--mut:#5E6B60;--line:#D9D6C6;--home:#1D5A3A;--away:#D69A1F;--draw:#BDBFB1;--red:#D8353F;--yel:#F2C230}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Source Sans 3",system-ui,sans-serif}
-main{max-width:640px;margin:0 auto;padding:16px 14px 48px}
-h1{font:700 30px "Barlow Condensed",sans-serif;margin:4px 0 12px}
-.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px}
-.chip{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:20px;padding:6px 13px;font:inherit;cursor:pointer}
-.chip[aria-pressed=true]{background:var(--pitch);border-color:var(--pitch);color:#fff}
-.day{font:600 14px "Source Sans 3";color:var(--mut);margin:16px 0 6px}
-.fx{background:var(--card);border:1px solid var(--line);border-radius:8px;margin-bottom:8px}
-.fx>button{all:unset;display:flex;justify-content:space-between;gap:10px;align-items:center;width:100%;padding:12px 14px;cursor:pointer;box-sizing:border-box}
-.fx>button:focus-visible{outline:2px solid var(--pitch);outline-offset:2px}
-.teams{font:700 20px "Barlow Condensed";line-height:1.15}
-.hour{color:var(--mut);font-size:14px;white-space:nowrap}
-.det{padding:4px 14px 14px;border-top:1px solid var(--line)}
-.bar{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:10px 0 4px}
-.bar i{display:block}
-.pc{display:flex;justify-content:space-between;font:700 18px "Barlow Condensed"}
-.adv{color:var(--mut);font-size:14px;margin:4px 0 10px}
-table{width:100%;border-collapse:collapse;margin:6px 0}
-td{padding:5px 0;border-bottom:1px solid var(--line);text-align:center}
-td:first-child{text-align:left;color:var(--mut);font-size:14px}
-.fm span{display:inline-block;width:18px;height:18px;line-height:18px;border-radius:3px;color:#fff;font-size:11px;margin-right:2px}
-.W{background:var(--pitch)}.D{background:var(--draw)}.L{background:var(--flag)}
-h3{font:700 17px "Barlow Condensed";margin:14px 0 4px}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:14px}
-.cols b{display:block;margin-bottom:2px}
-.out{color:var(--flag)}
-.ai{background:var(--bg);border-radius:6px;padding:10px;font-size:15px;white-space:pre-wrap}
-.msg{color:var(--mut);padding:10px 0}.err{color:var(--flag)}
-@media (prefers-reduced-motion:no-preference){.bar i{transition:width .3s}}
+body{margin:0;color:var(--ink);font:16px/1.45 "Source Sans 3",system-ui,sans-serif;background:repeating-linear-gradient(180deg,var(--g1) 0 96px,var(--g2) 96px 192px)}
+main{max-width:640px;margin:0 auto;padding:20px 14px 56px}
+header h1{font:700 56px/1 "Barlow Condensed",sans-serif;color:var(--chalk);margin:6px 0 4px}
+header p{color:#C9D8CC;margin:0 0 16px;max-width:30ch}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px}
+.chip{flex:none;border:1px solid rgba(243,241,231,.35);background:rgba(243,241,231,.08);color:var(--chalk);border-radius:20px;padding:7px 14px;font:inherit;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--chalk);color:var(--ink);border-color:var(--chalk);font-weight:600}
+.chip:focus-visible,.fx>button:focus-visible,input:focus-visible{outline:2px solid var(--yel);outline-offset:2px}
+details{background:var(--chalk);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+summary{cursor:pointer;font-weight:600}
+label{display:block;margin:10px 0;font-size:14px;color:var(--mut)}
+input{display:block;width:100%;margin-top:4px;padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font:inherit}
+details .chip{color:var(--ink);background:#fff;border-color:var(--line)}
+.day{font:600 18px "Barlow Condensed";color:var(--chalk);margin:20px 0 8px;text-transform:capitalize;letter-spacing:.02em}
+.fx{background:var(--chalk);border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.25)}
+.fx>button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;width:100%;padding:14px;cursor:pointer}
+.tm{display:flex;align-items:center;gap:8px;font:700 19px/1.1 "Barlow Condensed"}
+.tm.r{flex-direction:row-reverse;text-align:right}
+.tm img{width:30px;height:30px;object-fit:contain;flex:none}
+.hr{font:700 22px "Barlow Condensed";background:var(--ink);color:var(--chalk);border-radius:6px;padding:3px 9px}
+.det{padding:6px 16px 18px;border-top:2px dashed var(--line)}
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:14px 0 6px}
+.bar i{display:block;transition:width .4s}
+.pc{display:flex;justify-content:space-between;font:700 24px "Barlow Condensed"}
+.pc small{font:400 13px "Source Sans 3";color:var(--mut);display:block;text-align:center}
+.adv{color:var(--mut);font-size:14px;margin:6px 0 12px}
+h3{font:700 20px "Barlow Condensed";margin:18px 0 6px}
+.vs{margin:9px 0}
+.vt{display:grid;grid-template-columns:3.2em 1fr 3.2em;text-align:center;align-items:baseline}
+.vt b{font:700 19px "Barlow Condensed"}.vt b:first-child{text-align:left}.vt b:last-child{text-align:right}
+.vt span{font-size:13px;color:var(--mut)}
+.vb{height:6px;border-radius:3px;background:var(--away);overflow:hidden;margin-top:2px}
+.vb i{display:block;height:100%;background:var(--home)}
+.fm span{display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;border-radius:50%;color:#fff;font:600 11px "Source Sans 3";margin:0 1px}
+.W{background:var(--home)}.D{background:#8A8E80}.L{background:var(--red)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:14px}
+.cols b{display:block;margin-bottom:4px}
+.pl{display:inline-block;border-radius:5px;padding:2px 7px;margin:0 4px 4px 0;background:var(--yel);color:var(--ink)}
+.pl.o{background:var(--red);color:#fff}
+.ai{background:#fff;border-left:4px solid var(--home);border-radius:6px;padding:10px 12px;font-size:15px;white-space:pre-wrap;margin-top:8px}
+.qa{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.qa .chip{color:var(--ink);background:#fff;border-color:var(--line);font-size:14px;padding:6px 11px}
+.ask{display:flex;gap:6px}.ask input{margin:0}
+.ask button{flex:none;border:0;background:var(--ink);color:var(--chalk);border-radius:8px;padding:0 16px;font:600 15px "Source Sans 3";cursor:pointer}
+.msg{color:var(--mut);padding:8px 0}.err{color:var(--red)}
+header~#list>.msg{color:#C9D8CC}header~#list>.err{color:#FFB3B8}
+footer{color:#9DB3A2;font-size:13px;margin-top:28px}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
 </style>
 </head>
 <body>
 <main>
-<h1>Previa de partidos</h1>
+<header><h1>Previa</h1><p>Los datos del partido en una pantalla, antes de decidir nada.</p></header>
+<details id="cfg"><summary>Claves</summary>
+<label>API-Football (obligatoria)<input id="k1" type="password" autocomplete="off" placeholder="Pega tu clave"></label>
+<label>Gemini (para el resumen y las preguntas)<input id="k2" type="password" autocomplete="off" placeholder="Pega tu clave"></label>
+<button class="chip" id="save">Guardar</button>
+<p class="msg">Se guardan solo en este navegador. Nunca las subas a GitHub.</p>
+</details>
 <div class="chips" id="chips"></div>
 <div id="list"></div>
+<footer>+18. Apostar conlleva riesgo de pérdida. Los datos orientan, no garantizan nada.</footer>
 </main>
 <script>
 const LIGAS=[["La Liga",140],["Premier",39],["Bundesliga",78],["2. Bundesliga",79],["Serie A",135],["Ligue 1",61],["Liga 1 Rumanía",283],["Liga Portugal",94],["Süper Lig",203],["Eredivisie",88],["Super League Suiza",207],["Pro League Bélgica",144]];
 let cur=null;
 const h=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
-const api=async q=>{const r=await fetch('/api/football?'+q);const j=await r.json();if(!r.ok)throw new Error(j.error||'Error');return j};
+const logo=u=>{const i=h('img');i.src=u||'';i.alt='';i.loading='lazy';return i};
 
+/* ---------- datos (todo en el navegador, con caché) ---------- */
+const B='https://v3.football.api-sports.io',HR=3600e3;
+const _n=new Date(),SEASON=_n.getMonth()<6?_n.getFullYear()-1:_n.getFullYear();
+const ls=k=>localStorage.getItem(k)||'';
+const cget=(k,ttl)=>{try{const c=JSON.parse(localStorage.getItem(k));if(c&&Date.now()-c.t<ttl)return c.v}catch{}return null};
+const cset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify({t:Date.now(),v}))}catch{}};
+async function get(path,ttl){
+  const hit=cget('c:'+path,ttl);if(hit)return hit;
+  if(!ls('afkey'))throw new Error('Abre "Claves" y pega tu clave de API-Football.');
+  const r=await fetch(B+path,{headers:{'x-apisports-key':ls('afkey')}});
+  const j=await r.json();
+  const e=j.errors&&(Array.isArray(j.errors)?j.errors[0]:Object.values(j.errors)[0]);
+  if(e)throw new Error(e);
+  cset('c:'+path,j.response||[]);return j.response||[];
+}
+const tstat=s=>({gf:s?.goals?.for?.average?.total??null,ga:s?.goals?.against?.average?.total??null,form:(s?.form||'').slice(-5),cs:s?.clean_sheet?.total??null,fts:s?.failed_to_score?.total??null});
+const sv=(s,t)=>{const v=s.statistics.find(e=>e.type===t)?.value;return v==null?null:parseFloat(v)};
+function agg(fx,team){
+  let xg=0,xga=0,sot=0,n=0,m=0;
+  fx.forEach(x=>{
+    const st=x.statistics||[],a=st.find(s=>s.team.id===team),b=st.find(s=>s.team.id!==team);
+    if(!a||!b)return;
+    const p=sv(a,'expected_goals'),q=sv(b,'expected_goals'),c=sv(a,'Shots on Goal');
+    if(p!=null&&q!=null){xg+=p;xga+=q;n++}
+    if(c!=null){sot+=c;m++}
+  });
+  return {xg:n?(xg/n).toFixed(2):null,xga:n?(xga/n).toFixed(2):null,sot:m?(sot/m).toFixed(1):null,nxg:n};
+}
+async function api(q){
+  const p=new URLSearchParams(q);
+  if(p.get('action')==='fixtures'){
+    const list=await get(`/fixtures?league=${+p.get('league')}&season=${SEASON}&next=10`,6*HR);
+    return list.map(x=>({id:x.fixture.id,date:x.fixture.date,home:{id:x.teams.home.id,name:x.teams.home.name,logo:x.teams.home.logo},away:{id:x.teams.away.id,name:x.teams.away.name,logo:x.teams.away.logo}}));
+  }
+  const f=+p.get('fixture'),l=+p.get('league'),hh=+p.get('home'),aa=+p.get('away');
+  const hit=cget('m2:'+f,12*HR);if(hit)return hit;
+  const [inj,pred,sh,sa,lh,la]=await Promise.all([
+    get(`/injuries?fixture=${f}`,12*HR),get(`/predictions?fixture=${f}`,12*HR),
+    get(`/teams/statistics?league=${l}&season=${SEASON}&team=${hh}`,12*HR),
+    get(`/teams/statistics?league=${l}&season=${SEASON}&team=${aa}`,12*HR),
+    get(`/fixtures?team=${hh}&last=5`,12*HR),get(`/fixtures?team=${aa}&last=5`,12*HR)]);
+  const idsH=lh.map(x=>x.fixture.id),idsA=la.map(x=>x.fixture.id);
+  const all=[...new Set([...idsH,...idsA])];
+  let det=[];try{if(all.length)det=await get(`/fixtures?ids=${all.join('-')}`,12*HR)}catch{}
+  const pr=pred[0]||{};
+  const out={pct:pr.predictions?.percent||null,advice:pr.predictions?.advice||'',
+    comp:pr.comparison?{att:pr.comparison.att,def:pr.comparison.def}:null,
+    stats:{home:{...tstat(sh),...agg(det.filter(x=>idsH.includes(x.fixture.id)),hh)},away:{...tstat(sa),...agg(det.filter(x=>idsA.includes(x.fixture.id)),aa)}},
+    inj:{home:[],away:[]}};
+  inj.forEach(i=>out.inj[i.team.id===hh?'home':'away'].push({n:i.player.name,t:i.player.type,r:i.player.reason}));
+  out.ai=await gem(`Resume en español, en máximo 5 líneas, la previa de ${p.get('hn')} vs ${p.get('an')} usando SOLO estos datos. Destaca bajas importantes y tendencias. No des marcador exacto ni recomiendes apuestas.\n${JSON.stringify(out)}`);
+  cset('m2:'+f,out);return out;
+}
+async function gem(text,sys){
+  const k=ls('gmkey');if(!k)return '';
+  try{
+    const body={contents:[{parts:[{text}]}]};
+    if(sys)body.systemInstruction={parts:[{text:sys}]};
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${k}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const j=await r.json();
+    return j?.candidates?.[0]?.content?.parts?.[0]?.text||j?.error?.message||'';
+  }catch{return ''}
+}
+const REGLAS='Eres un analista de fútbol prudente. Responde en español, claro y en máximo 8 líneas. Usa SOLO los datos JSON del partido. Propón un mercado (1X2, doble oportunidad, más/menos goles, ambos marcan, hándicap) únicamente si al menos dos datos concretos lo respaldan, y cítalos (xG, goles, local/visitante, bajas). Si los datos no bastan o faltan (por ejemplo xG no disponible), dilo en vez de forzar una apuesta. Si el usuario no da cuotas, aclara que no puedes saber si hay valor, solo si los datos lo respaldan. Nunca hables de apuestas seguras ni prometas ganancias.';
+
+/* ---------- interfaz ---------- */
+const cfg=document.getElementById('cfg'),k1=document.getElementById('k1'),k2=document.getElementById('k2');
+k1.value=ls('afkey');k2.value=ls('gmkey');if(!ls('afkey'))cfg.open=true;
+document.getElementById('save').onclick=()=>{localStorage.setItem('afkey',k1.value.trim());localStorage.setItem('gmkey',k2.value.trim());cfg.open=false};
 const chips=document.getElementById('chips'),list=document.getElementById('list');
 LIGAS.forEach(([n,id])=>{const b=h('button','chip',n);b.setAttribute('aria-pressed','false');b.onclick=()=>load(id,b);chips.append(b)});
 
@@ -67,7 +162,9 @@ async function load(id,btn){
       const d=new Date(f.date),day=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
       if(day!==last){list.append(h('div','day',day));last=day}
       const card=h('div','fx'),b=h('button');
-      b.append(h('span','teams',f.home.name+' – '+f.away.name),h('span','hour',d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})));
+      const t1=h('span','tm');t1.append(logo(f.home.logo),h('span',null,f.home.name));
+      const t2=h('span','tm r');t2.append(logo(f.away.logo),h('span',null,f.away.name));
+      b.append(t1,h('span','hr',d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})),t2);
       const box=h('div','det');box.hidden=true;let done=false;
       b.onclick=()=>{box.hidden=!box.hidden;if(!box.hidden&&!done){done=true;detail(f,box)}};
       card.append(b,box);list.append(card);
@@ -76,6 +173,12 @@ async function load(id,btn){
 }
 
 const form=s=>{const w=h('span','fm');[...s].forEach(c=>w.append(h('span',c,c)));return w};
+const vs=(lab,a,b)=>{
+  const r=h('div','vs'),na=parseFloat(a),nb=parseFloat(b),ok=!isNaN(na)&&!isNaN(nb)&&na+nb>0;
+  const t=h('div','vt');t.append(h('b',null,a??'n/d'),h('span',null,lab),h('b',null,b??'n/d'));r.append(t);
+  if(ok){const bar=h('div','vb'),i=h('i');i.style.width=(na/(na+nb)*100)+'%';bar.append(i);r.append(bar)}
+  return r;
+};
 
 async function detail(f,box){
   box.append(h('div','msg','Cargando datos…'));
@@ -84,32 +187,40 @@ async function detail(f,box){
     box.replaceChildren();
     if(d.pct){
       const p=[d.pct.home,d.pct.draw,d.pct.away],n=p.map(x=>parseInt(x)||0);
-      const bar=h('div','bar');['var(--pitch)','var(--draw)','var(--flag)'].forEach((c,i)=>{const s=h('i');s.style.cssText=`width:${n[i]}%;background:${c}`;bar.append(s)});
-      const pc=h('div','pc');pc.append(h('span',null,p[0]),h('span',null,'Empate '+p[1]),h('span',null,p[2]));
+      const bar=h('div','bar');['var(--home)','var(--draw)','var(--away)'].forEach((c,i)=>{const s=h('i');s.style.cssText=`width:${n[i]}%;background:${c}`;bar.append(s)});
+      const pc=h('div','pc');
+      [['Local',p[0]],['Empate',p[1]],['Visitante',p[2]]].forEach(([l,v])=>{const s=h('span',null,v);s.append(h('small',null,l));pc.append(s)});
       box.append(bar,pc);
     }
     if(d.advice)box.append(h('div','adv',d.advice));
-    const t=h('table');
-    const row=(l,a,b)=>{const r=h('tr');r.append(h('td',null,l));[a,b].forEach(v=>{const c=h('td');v instanceof Node?c.append(v):c.textContent=v;r.append(c)});t.append(r)};
     const s=d.stats;
-    row('',f.home.name,f.away.name);
-    row('Últimos 5',form(s.home.form),form(s.away.form));
-    row('Goles a favor / partido',s.home.gf,s.away.gf);
-    row('Goles en contra / partido',s.home.ga,s.away.ga);
-    row('Porterías a cero',s.home.cs,s.away.cs);
-    row('Partidos sin marcar',s.home.fts,s.away.fts);
-    if(d.comp){row('Ataque',d.comp.att.home,d.comp.att.away);row('Defensa',d.comp.def.home,d.comp.def.away)}
-    box.append(t);
+    box.append(h('h3',null,'Cara a cara'));
+    const ft=h('div','vs'),fr=h('div','vt');fr.style.gridTemplateColumns='1fr auto 1fr';
+    fr.append(form(s.home.form),h('span',null,'Últimos 5'),form(s.away.form));fr.lastChild.style.textAlign='right';ft.append(fr);box.append(ft);
+    box.append(vs('Goles a favor por partido',s.home.gf,s.away.gf),vs('Goles en contra por partido',s.home.ga,s.away.ga));
+    box.append(vs('xG a favor (últimos 5)',s.home.xg,s.away.xg),vs('xG en contra (últimos 5)',s.home.xga,s.away.xga),vs('Tiros a puerta (últimos 5)',s.home.sot,s.away.sot));
+    box.append(vs('Porterías a cero',s.home.cs,s.away.cs),vs('Partidos sin marcar',s.home.fts,s.away.fts));
+    if(d.comp){box.append(vs('Ataque',d.comp.att.home,d.comp.att.away),vs('Defensa',d.comp.def.home,d.comp.def.away))}
+    if(!s.home.nxg&&!s.away.nxg)box.append(h('div','adv','xG no disponible para esta liga en tu plan; uso goles y tiros a puerta.'));
     box.append(h('h3',null,'Bajas'));
     const cols=h('div','cols');
     [['home',f.home.name],['away',f.away.name]].forEach(([k,n])=>{
       const c=h('div');c.append(h('b',null,n));
       if(!d.inj[k].length)c.append(h('div','msg','Sin bajas confirmadas'));
-      d.inj[k].forEach(i=>{const e=h('div',i.t==='Missing Fixture'?'out':null,i.n+' · '+(i.r||i.t));c.append(e)});
+      d.inj[k].forEach(i=>c.append(h('span',i.t==='Missing Fixture'?'pl o':'pl',i.n+' · '+(i.r||i.t))));
       cols.append(c);
     });
     box.append(cols);
-    if(d.ai){box.append(h('h3',null,'Resumen'),h('div','ai',d.ai))}
+    if(d.ai)box.append(h('h3',null,'Resumen'),h('div','ai',d.ai));
+    box.append(h('h3',null,'Pregunta a la IA'));
+    const out=h('div','ai');out.hidden=true;
+    const {ai:_x,...ctx}=d;ctx.partido=f.home.name+' (local) vs '+f.away.name+' (visitante)';
+    const ask=async t=>{if(!t.trim())return;out.hidden=false;out.textContent='Pensando…';out.textContent=(await gem(`Pregunta: ${t}\nDatos del partido:\n${JSON.stringify(ctx)}`,REGLAS))||'Añade tu clave de Gemini en "Claves".'};
+    const qa=h('div','qa');
+    ['¿Qué apuestas respaldan los datos?','¿Más o menos de 2,5 goles?','¿Ambos marcan?','¿Cómo pesan las bajas?'].forEach(t=>{const b=h('button','chip',t);b.onclick=()=>ask(t);qa.append(b)});
+    const row=h('div','ask'),inp=h('input');inp.placeholder='Escribe tu pregunta o pega cuotas';
+    const go=h('button',null,'Preguntar');go.onclick=()=>ask(inp.value);row.append(inp,go);
+    box.append(qa,row,out);
   }catch(e){box.replaceChildren(h('div','msg err',e.message))}
 }
 </script>
