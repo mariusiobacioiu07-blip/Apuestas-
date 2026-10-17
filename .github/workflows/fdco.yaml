@@ -1,0 +1,22 @@
+name: Football-data
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python scripts/fdco.py
+      - name: Guardar JSON
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add data/fdco.json data/backtest.json
+          git diff --staged --quiet || (git commit -m "Actualizar datos Football-data" && git push)
