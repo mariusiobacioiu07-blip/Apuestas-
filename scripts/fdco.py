@@ -83,6 +83,20 @@ def nov(odds):
     return [1 / x / z for x in odds]
 
 
+def nov_pot(odds):
+    """Quita el margen por el método de la potencia: reparte más margen a los outsiders (corrige el sesgo favorito-longshot)."""
+    q = [1 / x for x in odds]
+    lo, hi = 1.0, 6.0
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        if sum(v ** mid for v in q) > 1:
+            lo = mid
+        else:
+            hi = mid
+    c = (lo + hi) / 2
+    return [v ** c for v in q]
+
+
 def trio(r, pref):
     v = [num(r, pref + s) for s in 'HDA']
     return v if all(x and x > 1 for x in v) else None
@@ -177,9 +191,9 @@ def predecir(M, H, A):
 REGLA = 'Regla de la app: >5% y al menos 3 casas por encima de lo justo'
 
 
-def regla_app(i, c):
+def regla_app(i, c, k='pps'):
     """Misma regla que la app: la mejor cuota de las casas conocidas paga >5% sobre Pinnacle (pre) y >=3 casas pagan más de lo justo."""
-    ps = c['pps'][i]
+    ps = c[k][i]
     ok = [b[i] for b in c['libros'] if b[i] * ps - 1 > 0]
     if len(ok) >= 3 and max(ok) * ps - 1 > 0.05:
         return max(ok)
@@ -192,6 +206,8 @@ def _si(cond, price):
 
 ESTRAT = [
     (REGLA, regla_app),
+    ('Regla de la app con margen quitado por potencia', lambda i, c: regla_app(i, c, 'ppw')),
+    ('Mejor cuota (Max) vs Pinnacle (pre, potencia) >5%', lambda i, c: _si(c['best'][i] * c['ppw'][i] - 1 > 0.05, c['best'][i])),
     ('Regla de la app y el modelo coincide', lambda i, c: regla_app(i, c) if c['dc'] is not None and c['dc'][i] > c['pps'][i] else None),
     ('Mejor cuota (columna Max) vs Pinnacle (pre) >5%', lambda i, c: _si(c['best'][i] * c['pps'][i] - 1 > 0.05, c['best'][i])),
     ('Mejor cuota (columna Max) vs Pinnacle (pre) >2%', lambda i, c: _si(c['best'][i] * c['pps'][i] - 1 > 0.02, c['best'][i])),
@@ -241,7 +257,7 @@ def backtest(datos):
             if not (m['ps'] and m['pc'] and m['best']):
                 continue
             out = [1, 0, 0] if m['hg'] > m['ag'] else [0, 1, 0] if m['hg'] == m['ag'] else [0, 0, 1]
-            c = dict(best=m['best'], b365=m['b365'], libros=m['libros'], pps=nov(m['ps']), pc=nov(m['pc']), out=out, dc=predecir(modelo, m['h'], m['a']))
+            c = dict(best=m['best'], b365=m['b365'], libros=m['libros'], pps=nov(m['ps']), ppw=nov_pot(m['ps']), pc=nov(m['pc']), out=out, dc=predecir(modelo, m['h'], m['a']))
             if c['dc'] is not None:
                 B['n'] += 1
                 for k, pr in (('m', c['dc']), ('p', c['pps']), ('c', c['pc'])):
