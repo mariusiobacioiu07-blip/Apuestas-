@@ -344,7 +344,7 @@ function pintaModelo(box,M,sf,cu,sh,f){
   if(cu.mas25)rows.push(['Más 2,5','o25',cu.mas25],['Menos 2,5','u25',cu.menos25]);
   let n=0;
   rows.forEach(([t,k,x])=>{
-    const pm=M[k],ps=sh?sh[k]:null,p=ps!=null?.4*pm+.6*ps:pm,ev=p*x.cuota-1,kel=Math.max(0,Math.min(.03,ev/(x.cuota-1)*.25)),val=ev>.05&&(ps==null||pm>ps);
+    const pm=M[k],ps=sh?sh[k]:null,p=ps!=null?ps:pm,ev=p*x.cuota-1,kel=Math.max(0,Math.min(.03,ev/(x.cuota-1)*.25)),val=ps!=null&&ev>.05;
     const r=h('div','vr'+(val?' ok':''));
     r.append(h('span',null,`${t} @${x.cuota.toFixed(2)} · modelo ${pc(pm)}`+(ps!=null?` · Pinnacle ${pc(ps)}`:'')+` · EV ${(ev*100).toFixed(1)}%`));
     if(val){
@@ -354,7 +354,7 @@ function pintaModelo(box,M,sf,cu,sh,f){
     }
     box.append(r);
   });
-  box.append(h('div','adv',(n?'Marcado = EV superior al 5% y el modelo supera a Pinnacle. ':'Ningún mercado supera el 5% de EV: lo normal es no apostar. ')+(sh?'La probabilidad usada mezcla 40% modelo y 60% Pinnacle sin margen, para no fiarse de un modelo sencillo.':'Sin Pinnacle disponible se usa solo el modelo, así que el EV es poco fiable.')));
+  box.append(h('div','adv',(n?'Marcado = la mejor cuota paga más de un 5% sobre la probabilidad de Pinnacle sin margen. ':'Ningún mercado supera el 5% de EV: lo normal es no apostar. ')+(sh?'La probabilidad usada es la de Pinnacle sin margen. El modelo Poisson es solo orientativo: en el backtest no mejoró al mercado.':'Sin Pinnacle no se marca valor: el modelo solo no es fiable.')));
   const kmv='mv:'+f.id,prev=cget(kmv,14*864e5);
   if(prev)['local','empate','visitante'].forEach(k=>{const d=cu[k].cuota/prev[k]-1;if(Math.abs(d)>=.05)box.append(h('div','adv','⚠ Cuota '+k+' '+(d>0?'sube':'baja')+' un '+Math.abs(d*100).toFixed(0)+'% desde tu última consulta.'))});
   cset(kmv,{local:cu.local.cuota,empate:cu.empate.cuota,visitante:cu.visitante.cuota});
