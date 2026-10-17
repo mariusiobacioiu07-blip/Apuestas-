@@ -10,7 +10,7 @@ FD, KEY = os.environ.get('FD_TOKEN', ''), os.environ.get('ODDS_KEY', '')
 TOTALS = os.environ.get('CLOSING_TOTALS') == '1'      # +1 crédito por consulta: añade más/menos 2,5
 DEPORTE = {'PL': 'soccer_epl', 'PD': 'soccer_spain_la_liga', 'BL1': 'soccer_germany_bundesliga', 'SA': 'soccer_italy_serie_a',
            'FL1': 'soccer_france_ligue_one', 'DED': 'soccer_netherlands_eredivisie', 'PPL': 'soccer_portugal_primeira_liga'}
-VENTANA_MIN = 1440
+VENTANA_MIN = 25
 RUTA = 'data/closing.json'
 
 
