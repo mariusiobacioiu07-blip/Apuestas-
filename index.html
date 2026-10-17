@@ -64,6 +64,10 @@ h3{font:700 20px "Barlow Condensed";margin:18px 0 6px;color:var(--acc);letter-sp
 .msg{color:var(--mut);padding:8px 0}.err{color:#FF8A95}
 .sk{height:78px;border-radius:16px;margin-bottom:12px;background:linear-gradient(90deg,var(--card) 0,var(--card2) 50%,var(--card) 100%);background-size:200% 100%;animation:sh 1.3s linear infinite}
 @keyframes sh{to{background-position:-200% 0}}
+.odds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+.od{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}
+.od b{display:block;font:700 26px/1.1 "Barlow Condensed";color:var(--acc)}
+.od span{display:block;font-size:12px;color:var(--mut)}
 footer{color:#6F8578;font-size:13px;margin-top:28px}
 @media (prefers-reduced-motion:reduce){.vb i,.sk,.go::after{transition:none;animation:none}}
 </style>
@@ -76,6 +80,7 @@ footer{color:#6F8578;font-size:13px;margin-top:28px}
 <label>Gemini (resumen, preguntas y búsqueda web)<input id="k2" type="password" autocomplete="off" placeholder="Pega tu clave"></label>
 <label>Grok (opcional)<input id="k3" type="password" autocomplete="off" placeholder="Pega tu clave"></label>
 <label>Modelo de Grok (opcional, si sabes cuál usar)<input id="k4" autocomplete="off" placeholder="Ej: grok-4"></label>
+<label>The Odds API (cuotas, opcional)<input id="k5" type="password" autocomplete="off" placeholder="Pega tu clave"></label>
 <button class="chip dk" id="save">Guardar</button>
 <p class="msg">Se guardan solo en este navegador. Nunca las subas a GitHub.</p>
 </details>
@@ -86,6 +91,7 @@ footer{color:#6F8578;font-size:13px;margin-top:28px}
 <script>
 const LIGAS=[["La Liga","PD"],["Premier","PL"],["Bundesliga","BL1"],["Serie A","SA"],["Ligue 1","FL1"],["Eredivisie","DED"],["Liga Portugal","PPL"]];
 const UND={PD:'La_liga',PL:'EPL',BL1:'Bundesliga',SA:'Serie_A',FL1:'Ligue_1'};
+const ODDS={PD:'soccer_spain_la_liga',PL:'soccer_epl',BL1:'soccer_germany_bundesliga',SA:'soccer_italy_serie_a',FL1:'soccer_france_ligue_one',DED:'soccer_netherlands_eredivisie',PPL:'soccer_portugal_primeira_liga'};
 let cur=null;
 const h=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
 const logo=u=>{const i=h('img');i.src=u||'';i.alt='';i.loading='lazy';return i};
@@ -153,6 +159,41 @@ async function previa(f,code){
   if(!gem.fail)cset('p1:'+f.id,out);return out;
 }
 
+/* ---------- cuotas ---------- */
+async function cuotas(code){
+  const sp=ODDS[code],k=ls('oddskey');if(!sp||!k)return null;
+  const hit=cget('o:'+code,6*HR);if(hit)return hit;
+  try{
+    const r=await fetch('/api/odds?sport='+sp,{headers:{'x-token':k}});
+    const j=await r.json();
+    if(!r.ok||!Array.isArray(j))return {error:(j&&(j.message||j.error))||('Error '+r.status)};
+    const v={ev:j,rest:r.headers.get('x-requests-remaining')};cset('o:'+code,v);return v;
+  }catch(e){return {error:e.message}}
+}
+function cuotasPartido(O,f){
+  if(!O||!O.ev)return null;
+  const mp={};O.ev.forEach(e=>mp[e.home_team]=e);
+  const ev=findTeam(mp,f.home.name);
+  if(!ev||!findTeam({[ev.away_team]:1},f.away.name))return null;
+  const best={h:0,d:0,a:0},P={h:0,d:0,a:0},ou={o:0,u:0,po:0,pu:0,n:0};let nb=0;
+  ev.bookmakers.forEach(b=>{
+    const h2=b.markets.find(m=>m.key==='h2h');
+    if(h2){
+      const g=n=>h2.outcomes.find(o=>o.name===n)?.price,h=g(ev.home_team),a=g(ev.away_team),d=g('Draw');
+      if(h&&a&&d){best.h=Math.max(best.h,h);best.d=Math.max(best.d,d);best.a=Math.max(best.a,a);const t=1/h+1/d+1/a;P.h+=1/h/t;P.d+=1/d/t;P.a+=1/a/t;nb++}
+    }
+    const t=b.markets.find(m=>m.key==='totals');
+    if(t){
+      const o=t.outcomes.find(x=>x.name==='Over'&&x.point===2.5),u=t.outcomes.find(x=>x.name==='Under'&&x.point===2.5);
+      if(o&&u){ou.o=Math.max(ou.o,o.price);ou.u=Math.max(ou.u,u.price);const z=1/o.price+1/u.price;ou.po+=1/o.price/z;ou.pu+=1/u.price/z;ou.n++}
+    }
+  });
+  if(!nb)return null;
+  const pc=x=>Math.round(x*100);
+  return {casas:nb,local:{cuota:best.h,prob:pc(P.h/nb)},empate:{cuota:best.d,prob:pc(P.d/nb)},visitante:{cuota:best.a,prob:pc(P.a/nb)},
+    mas25:ou.n?{cuota:ou.o,prob:pc(ou.po/ou.n)}:null,menos25:ou.n?{cuota:ou.u,prob:pc(ou.pu/ou.n)}:null};
+}
+
 /* ---------- IA ---------- */
 const MODELOS=['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-flash-latest','gemini-flash-lite-latest','gemini-3.8-flash','gemini-3.8-flash-lite','gemini-3.7-flash','gemini-3.6-flash','gemini-3.5-flash','gemini-3.5-flash-lite','gemini-3.1-flash-lite','gemini-3-flash-preview'];
 async function gem(text,sys,web){
@@ -215,10 +256,10 @@ async function ia(text,sys,web){
   return (r?r+'\n\n':'')+(g||'');
 }
 const BUSCA='Eres un analista de datos de fútbol. Busca en la web y responde en español. No inventes cifras: si no encuentras un dato escribe "no encontrado". Indica la fuente y la fecha de los datos importantes. No des apuestas ni marcador.';
-const REGLAS='Eres un analista de fútbol prudente. Responde en español, claro y en máximo 8 líneas. Usa SOLO los datos JSON del partido. Si incluyen informes o bajas obtenidos de la web, úsalos pero avisa de que no están verificados. Propón un mercado (1X2, doble oportunidad, más/menos goles, ambos marcan, hándicap) únicamente si al menos dos datos concretos lo respaldan, y cítalos (xG, goles, local/visitante, bajas). Si los datos no bastan o faltan, dilo en vez de forzar una apuesta. Si el usuario no da cuotas, aclara que no puedes saber si hay valor, solo si los datos lo respaldan. Nunca hables de apuestas seguras ni prometas ganancias.';
+const REGLAS='Eres un analista de fútbol prudente. Responde en español, claro y en máximo 8 líneas. Usa SOLO los datos JSON del partido. Si incluyen informes o bajas obtenidos de la web, úsalos pero avisa de que no están verificados. Propón un mercado (1X2, doble oportunidad, más/menos goles, ambos marcan, hándicap) únicamente si al menos dos datos concretos lo respaldan, y cítalos (xG, goles, local/visitante, bajas). Si los datos no bastan o faltan, dilo en vez de forzar una apuesta. Si el JSON incluye cuotas, compara la probabilidad implícita del mercado con lo que respaldan los datos y señala dónde podría haber valor, sin prometer nada. Si no hay cuotas ni las da el usuario, aclara que no puedes saber si hay valor, solo si los datos lo respaldan. Nunca hables de apuestas seguras ni prometas ganancias.';
 
 /* ---------- interfaz ---------- */
-const cfg=document.getElementById('cfg'),K=[1,2,3,4].map(n=>document.getElementById('k'+n)),KS=['fdkey','gmkey','xkey','xmodel'];
+const cfg=document.getElementById('cfg'),K=[1,2,3,4,5].map(n=>document.getElementById('k'+n)),KS=['fdkey','gmkey','xkey','xmodel','oddskey'];
 KS.forEach((k,i)=>K[i].value=ls(k));if(!ls('fdkey'))cfg.open=true;
 document.getElementById('save').onclick=()=>{KS.forEach((k,i)=>localStorage.setItem(k,K[i].value.trim()));cfg.open=false};
 const chips=document.getElementById('chips'),list=document.getElementById('list');
@@ -295,7 +336,16 @@ async function detail(f,box){
     if(s.home.xg!=null)box.append(vs('xG a favor (últimos 5)',s.home.xg,s.away.xg),vs('xG en contra (últimos 5)',s.home.xga,s.away.xga),
       vs('xG a favor: local en casa, visitante fuera',s.home.xgLoc,s.away.xgLoc),vs('xG en contra: local en casa, visitante fuera',s.home.xgaLoc,s.away.xgaLoc));
     box.append(h('div','adv',d.fuenteXg?'Fuente del xG: '+d.fuenteXg+'.':'Sin xG para este partido (solo las 5 grandes, y si Understat responde).'));
-    const ctx={partido:f.home.name+' (local) vs '+f.away.name+' (visitante)',datos:s,leyenda:'gf/ga = goles por partido de la temporada; gfLoc/gaLoc = del local en casa o del visitante fuera; gf5/ga5 y form = últimos 5 partidos; xg/xga = últimos 5 (Understat); xgLoc/xgaLoc = temporada como local en casa o visitante fuera.'};
+    const O=await cuotas(cur),cu=cuotasPartido(O,f);
+    box.append(h('h3',null,'Cuotas'));
+    if(cu){
+      const od=h('div','odds');
+      [['1 · Local',cu.local],['X · Empate',cu.empate],['2 · Visitante',cu.visitante]].forEach(([t,x])=>{const c=h('div','od');c.append(h('b',null,x.cuota.toFixed(2)),h('span',null,t),h('span',null,'mercado: '+x.prob+'%'));od.append(c)});
+      box.append(od);
+      if(cu.mas25){const o2=h('div','odds');o2.style.gridTemplateColumns='1fr 1fr';[['Más de 2,5',cu.mas25],['Menos de 2,5',cu.menos25]].forEach(([t,x])=>{const c=h('div','od');c.append(h('b',null,x.cuota.toFixed(2)),h('span',null,t),h('span',null,'mercado: '+x.prob+'%'));o2.append(c)});box.append(o2)}
+      box.append(h('div','adv','Mejor cuota entre '+cu.casas+' casas. El % es la probabilidad que descuenta el mercado, sin margen.'+(O.rest?' Créditos restantes este mes: '+O.rest+'.':'')));
+    }else box.append(h('div','adv',!ls('oddskey')?'Añade tu clave de The Odds API en "Claves" para ver las cuotas.':(O&&O.error)?'Cuotas no disponibles: '+O.error:'No encontré cuotas para este partido (puede que aún no estén publicadas).'));
+    const ctx={partido:f.home.name+' (local) vs '+f.away.name+' (visitante)',datos:s,cuotas:cu,leyenda:'gf/ga = goles por partido de la temporada; gfLoc/gaLoc = del local en casa o del visitante fuera; gf5/ga5 y form = últimos 5 partidos; xg/xga = últimos 5 (Understat); xgLoc/xgaLoc = temporada como local en casa o visitante fuera.'};
     if(d.ai)box.append(h('h3',null,'Resumen'),h('div','ai',d.ai));
     box.append(h('h3',null,'Bajas'));
     const bb=h('button','chip dk','Buscar bajas con IA'),bo=h('div','ai');bo.hidden=true;
@@ -305,7 +355,8 @@ async function detail(f,box){
       const r=await ia(q,BUSCA,true);
       bo.textContent=r||'Añade tu clave de Gemini o Grok en "Claves".';ctx.bajasWeb=r;
     };
-    box.append(bb,bo);
+    const mi=h('input');mi.placeholder='O pega aquí las bajas que hayas encontrado';mi.style.marginTop='8px';mi.oninput=()=>{ctx.bajasWeb=mi.value};
+    box.append(bb,bo,mi);
     preguntas(box,ctx);
   }catch(e){box.replaceChildren(h('div','msg err',e.message))}
 }
