@@ -102,7 +102,7 @@ def backtest(rows, R):
         hist.setdefault(A, []).append((ag, hg, False))
 
 
-teams, refs, R = {}, {}, dict(n=0, bm=0, bp=0, bets=0, pf=0, clv=0)
+teams, refs, R = {}, {}, dict(n=0, bm=0, bp=0, s={})
 for l in LIGAS:
     rows = sorted(bajar(ACTUAL, l), key=fecha)
     por = {}
