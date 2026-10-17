@@ -273,7 +273,7 @@ const BUSCA='Eres un analista de datos de fútbol. Busca en la web y responde en
 const REGLAS='Eres un analista de fútbol prudente. Responde en español, claro y en máximo 8 líneas. Usa SOLO los datos JSON del partido. Si incluyen informes o bajas obtenidos de la web, úsalos pero avisa de que no están verificados. Propón un mercado (1X2, doble oportunidad, más/menos goles, ambos marcan, hándicap) únicamente si al menos dos datos concretos lo respaldan, y cítalos (xG, goles, local/visitante, bajas). Si los datos no bastan o faltan, dilo en vez de forzar una apuesta. Si el JSON incluye cuotas, compara la probabilidad implícita del mercado con lo que respaldan los datos y señala dónde podría haber valor, sin prometer nada. Si no hay cuotas ni las da el usuario, aclara que no puedes saber si hay valor, solo si los datos lo respaldan. Nunca hables de apuestas seguras ni prometas ganancias.';
 
 /* ---------- Sofascore ---------- */
-async function sfc(f){try{let D=cget('sf',HR);if(!D){const r=await fetch('/data/sofascore.json');if(!r.ok)return null;D=await r.json();cset('sf',D)}const a=findTeam(D.teams||{},f.home.name),b=findTeam(D.teams||{},f.away.name);return a&&b?{home:a,away:b}:null}catch{return null}}
+async function sfc(f){try{let D=cget('fd',HR);if(!D){const r=await fetch('/data/fdco.json');if(!r.ok)return null;D=await r.json();cset('fd',D)}const a=findTeam(D.teams||{},f.home.name),b=findTeam(D.teams||{},f.away.name);return a&&b?{home:a,away:b}:null}catch{return null}}
 
 /* ---------- modelo Poisson ---------- */
 const pois=(l,k)=>{let p=Math.exp(-l);for(let i=1;i<=k;i++)p*=l/i;return p};
@@ -335,8 +335,8 @@ function pintaModelo(box,M,sf,cu,sh,f){
     if(co)l.push(`Córners esperados ${co.toFixed(1)} · más de 9,5: ${pc(pOver(co,9))} (cuota justa ${(1/pOver(co,9)).toFixed(2)})`);
     if(ta)l.push(`Amarillas esperadas ${ta.toFixed(1)} · más de 4,5: ${pc(pOver(ta,4))} (cuota justa ${(1/pOver(ta,4)).toFixed(2)})`);
     const bj=k=>(sf[k].bajas||[]).map(b=>b.n+' ('+b.pos+')').join(', ')||'ninguna';
-    l.push('Bajas (Sofascore) · '+corto(f.home.name)+': '+bj('home')+' · '+corto(f.away.name)+': '+bj('away'));
-    box.append(h('div','adv',l.join('\n')+'\nCórners y tarjetas: Poisson sobre los últimos 5 de cada equipo, orientativo; compáralo con la cuota de tu casa.'));
+    if(sf.home.bajas)l.push('Bajas (Sofascore) · '+corto(f.home.name)+': '+bj('home')+' · '+corto(f.away.name)+': '+bj('away'));
+    box.append(h('div','adv',l.join('\n')+'\nCórners y tarjetas (football-data.co.uk): Poisson sobre los últimos 5 de cada equipo, orientativo; compáralo con la cuota de tu casa.'));
   }
   box.append(h('h3',null,'Valor'));
   if(!cu){box.append(h('div','adv','Sin cuotas no se puede calcular el valor.'));return}
