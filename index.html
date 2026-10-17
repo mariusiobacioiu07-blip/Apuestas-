@@ -129,7 +129,8 @@ const UND={PD:'La_liga',PL:'EPL',BL1:'Bundesliga',SA:'Serie_A',FL1:'Ligue_1'};
 const ODDS={PD:'soccer_spain_la_liga',PL:'soccer_epl',BL1:'soccer_germany_bundesliga',SA:'soccer_italy_serie_a',FL1:'soccer_france_ligue_one',DED:'soccer_netherlands_eredivisie',PPL:'soccer_portugal_primeira_liga'};
 let cur=null,vista=0;
 const MIN_PROB=0.35; // probabilidad mínima de Pinnacle (sin margen) para marcar valor: evita cuotas largas
-const MIN_CASAS=3; // casas que deben pagar por encima de lo justo para marcar valor
+const MIN_EV=0.03; // ventaja mínima de la mejor cuota sobre la probabilidad de Pinnacle sin margen (la que salió mejor en el backtest)
+const MIN_CASAS=1; // casas que deben pagar por encima de lo justo (el backtest no exigía más de 1)
 const h=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
 const logo=u=>{const i=h('img');i.src=u||'';i.alt='';i.loading='lazy';return i};
 
@@ -418,7 +419,7 @@ function pintaModelo(box,M,sf,cu,sh,f){
   let n=0,aisl=0,larg=0;
   rows.forEach(([t,k,x])=>{
     const pm=M[k],ps=sh?sh[k]:null,p=ps!=null?ps:pm,ev=p*x.cuota-1,kel=Math.max(0,Math.min(.03,ev/(x.cuota-1)*.25));
-    const nb=((cu.all&&cu.all[AK[k]])||[]).filter(pr=>p*pr-1>0).length,ok5=ps!=null&&ev>.05,largo=ok5&&nb>=MIN_CASAS&&ps<MIN_PROB,val=ok5&&nb>=MIN_CASAS&&!largo,agree=ps!=null&&pm>=ps;
+    const nb=((cu.all&&cu.all[AK[k]])||[]).filter(pr=>p*pr-1>0).length,ok5=ps!=null&&ev>MIN_EV,largo=ok5&&nb>=MIN_CASAS&&ps<MIN_PROB,val=ok5&&nb>=MIN_CASAS&&!largo,agree=ps!=null&&pm>=ps;
     if(largo)larg++;else if(ok5&&!val)aisl++;
     const r=h('div','vr'+(val?' ok':''));
     r.append(h('span',null,`${t} @${x.cuota.toFixed(2)} · modelo ${pc(pm)}`+(ps!=null?` · Pinnacle ${pc(ps)}`:'')+` · EV ${(ev*100).toFixed(1)}% · ${nb} ${nb===1?'casa':'casas'} con EV>0`));
@@ -426,12 +427,12 @@ function pintaModelo(box,M,sf,cu,sh,f){
     else if(ok5&&!val)r.append(h('div',null,'No se marca: solo '+(nb===1?'la paga 1 casa':'la pagan '+nb+' casas')+' por encima de lo justo. Suele ser un error o una cuota desfasada.'));
     if(val){
       n++;const stake=unidad>0?unidad:banca?+(banca*kel).toFixed(2):1;
-      r.append(h('div',null,'Valor confirmado en '+nb+' casas. '+(agree?'✓ El modelo coincide.':'✗ El modelo no coincide: más riesgo.')+' Stake: '+stake+(unidad>0?' € (fijo)':banca?' € (¼ Kelly, máx. 3%)':' unidad (pon un stake fijo en "Claves")')));
+      r.append(h('div',null,'Valor: la paga '+(nb===1?'1 casa':nb+' casas')+' por encima de lo justo.'+(nb===1?' Confirma que la cuota sigue disponible. ':' ')+(agree?'✓ El modelo coincide.':'✗ El modelo no coincide: más riesgo.')+' Stake: '+stake+(unidad>0?' € (fijo)':banca?' € (¼ Kelly, máx. 3%)':' unidad (pon un stake fijo en "Claves")')));
       const b=h('button','chip dk','Registrar');b.onclick=()=>{const B=bets();B.push({m:corto(f.home.name)+' vs '+corto(f.away.name),mk:t,odd:x.cuota,stake,res:null,close:null,k,hn:cu.hn,an:cu.an,ko:cu.ko,ag:agree,nb});svb(B);b.textContent='Guardada';b.disabled=true};r.append(b);
     }
     box.append(r);
   });
-  box.append(h('div','adv',(n?'Marcado = la mejor cuota paga más de un 5% sobre la probabilidad de Pinnacle sin margen y al menos '+MIN_CASAS+' casas pagan por encima de lo justo, con una probabilidad de al menos '+pc(MIN_PROB)+'. ':aisl?'Hay una cuota con más del 5% de EV, pero solo la paga una casa (o muy pocas): suele ser un error o una cuota desfasada, no se marca. ':'Ningún mercado supera el 5% de EV: lo normal es no apostar. ')+(sh?'La probabilidad usada es la de Pinnacle sin margen. El modelo es solo orientativo: mira en Inicio si en el backtest mejora al mercado.':'Sin Pinnacle no se marca valor: el modelo solo no es fiable.')));
+  box.append(h('div','adv',(n?'Marcado = la mejor cuota paga más de un '+(MIN_EV*100)+'% sobre la probabilidad de Pinnacle sin margen y esa probabilidad es de al menos '+pc(MIN_PROB)+' (sin cuotas largas). ':aisl?'Hay una cuota con ventaja, pero no cumple la regla, no se marca. ':(larg?'Solo hay ventaja en cuotas largas, que no se marcan: lo normal es no apostar. ':'Ningún mercado supera el '+(MIN_EV*100)+'% de EV: lo normal es no apostar. '))+(sh?'La probabilidad usada es la de Pinnacle sin margen. El modelo es solo orientativo: mira en Inicio si en el backtest mejora al mercado.':'Sin Pinnacle no se marca valor: el modelo solo no es fiable.')));
   const kmv='mv:'+f.id,prev=cget(kmv,14*864e5);
   if(prev)['local','empate','visitante'].forEach(k=>{const d=cu[k].cuota/prev[k]-1;if(Math.abs(d)>=.05)box.append(h('div','adv','⚠ Cuota '+k+' '+(d>0?'sube':'baja')+' un '+Math.abs(d*100).toFixed(0)+'% desde tu última consulta.'))});
   cset(kmv,{local:cu.local.cuota,empate:cu.empate.cuota,visitante:cu.visitante.cuota});
