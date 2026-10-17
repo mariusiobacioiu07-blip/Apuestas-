@@ -483,7 +483,7 @@ async function backtestPanel(){
   p.append(pb);
   const fila=(t,x)=>{const r=h('div','row col');r.append(h('span',null,t),h('span','hint',x));p.append(r)};
   R.estrategias.forEach(e=>fila(e.nombre,e.n?`${e.n} apuestas · ROI ${e.roi}% ± ${e.roi_ic} · CLV ${e.clv}% ± ${e.clv_ic}`:'sin apuestas'));
-  if((R.por_liga||[]).length)fila('Por liga (mejor cuota vs Pinnacle >5%)',R.por_liga.map(l=>`${l.liga}: ${l.n} ap., ROI ${l.roi}%`).join(' · '));
+  if((R.por_liga||[]).length)fila('Por liga (regla de la app)',R.por_liga.map(l=>`${l.liga}: ${l.n} ap., ROI ${l.roi}%`).join(' · '));
   p.append(h('div','pb hint','Solo cuentan las cuotas de antes del cierre; el cierre de Pinnacle se usa después para medir CLV. Si el ± es mayor que el ROI, es ruido. La "mejor cuota" puede incluir casas que no tienes.'));
   return p;
 }
