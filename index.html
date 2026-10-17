@@ -222,22 +222,22 @@ function cuotasPartido(O,f){
   const mp={};O.ev.forEach(e=>mp[e.home_team]=e);
   const ev=findTeam(mp,f.home.name);
   if(!ev||!findTeam({[ev.away_team]:1},f.away.name))return null;
-  const best={h:0,d:0,a:0},P={h:0,d:0,a:0},ou={o:0,u:0,po:0,pu:0,n:0},all={h:[],d:[],a:[],o:[],u:[]};let nb=0;
+  const best={h:0,d:0,a:0},P={h:0,d:0,a:0},ou={o:0,u:0,po:0,pu:0,n:0},all={h:[],d:[],a:[],o:[],u:[]},by={},bk=b=>by[b.key]||(by[b.key]={t:b.title||b.key});let nb=0;
   ev.bookmakers.forEach(b=>{
     const h2=b.markets.find(m=>m.key==='h2h');
     if(h2){
       const g=n=>h2.outcomes.find(o=>o.name===n)?.price,h=g(ev.home_team),a=g(ev.away_team),d=g('Draw');
-      if(h&&a&&d){best.h=Math.max(best.h,h);best.d=Math.max(best.d,d);best.a=Math.max(best.a,a);const t=1/h+1/d+1/a;P.h+=1/h/t;P.d+=1/d/t;P.a+=1/a/t;nb++;all.h.push(h);all.d.push(d);all.a.push(a)}
+      if(h&&a&&d){best.h=Math.max(best.h,h);best.d=Math.max(best.d,d);best.a=Math.max(best.a,a);const t=1/h+1/d+1/a;P.h+=1/h/t;P.d+=1/d/t;P.a+=1/a/t;nb++;all.h.push(h);all.d.push(d);all.a.push(a);Object.assign(bk(b),{h,d,a})}
     }
     const t=b.markets.find(m=>m.key==='totals');
     if(t){
       const o=t.outcomes.find(x=>x.name==='Over'&&x.point===2.5),u=t.outcomes.find(x=>x.name==='Under'&&x.point===2.5);
-      if(o&&u){ou.o=Math.max(ou.o,o.price);ou.u=Math.max(ou.u,u.price);const z=1/o.price+1/u.price;ou.po+=1/o.price/z;ou.pu+=1/u.price/z;ou.n++;all.o.push(o.price);all.u.push(u.price)}
+      if(o&&u){ou.o=Math.max(ou.o,o.price);ou.u=Math.max(ou.u,u.price);const z=1/o.price+1/u.price;ou.po+=1/o.price/z;ou.pu+=1/u.price/z;ou.n++;all.o.push(o.price);all.u.push(u.price);Object.assign(bk(b),{o:o.price,u:u.price})}
     }
   });
   if(!nb)return null;
   const pc=x=>Math.round(x*100);
-  return {casas:nb,all,ko:ev.commence_time,hn:ev.home_team,an:ev.away_team,local:{cuota:best.h,prob:pc(P.h/nb)},empate:{cuota:best.d,prob:pc(P.d/nb)},visitante:{cuota:best.a,prob:pc(P.a/nb)},
+  return {casas:nb,all,by,ko:ev.commence_time,hn:ev.home_team,an:ev.away_team,local:{cuota:best.h,prob:pc(P.h/nb)},empate:{cuota:best.d,prob:pc(P.d/nb)},visitante:{cuota:best.a,prob:pc(P.a/nb)},
     mas25:ou.n?{cuota:ou.o,prob:pc(ou.po/ou.n)}:null,menos25:ou.n?{cuota:ou.u,prob:pc(ou.pu/ou.n)}:null};
 }
 
@@ -416,6 +416,27 @@ function pintaModelo(box,M,sf,cu,sh,f){
   const banca=parseFloat(ls('banca').replace(',','.'))||0,rows=[['1 Local','h',cu.local],['X Empate','d',cu.empate],['2 Visitante','a',cu.visitante]];
   if(cu.mas25)rows.push(['Más 2,5','o25',cu.mas25],['Menos 2,5','u25',cu.menos25]);
   const unidad=parseFloat(ls('unidad').replace(',','.'))||0,AK={h:'h',d:'d',a:'a',o25:'o',u25:'u'};
+  /* Mi casa + cuota mínima */
+  const mcBox=h('div','adv'),sel=document.createElement('select');
+  sel.style.cssText='width:100%;margin:6px 0;padding:10px;border-radius:10px;background:var(--bg);color:var(--ink);border:1px solid var(--line);font:inherit';
+  [['','Mi casa: sin elegir']].concat(Object.entries(cu.by||{}).map(([k,v])=>[k,v.t]).sort((a,b)=>a[1].localeCompare(b[1]))).forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;sel.append(o)});
+  sel.value=ls('micasa')||'';
+  const pintaMC=()=>{
+    const mc=ls('micasa'),B=mc&&cu.by?cu.by[mc]:null,L=[];
+    if(!sh){mcBox.textContent='Sin Pinnacle no se puede calcular la cuota mínima.';return}
+    rows.forEach(([t,k])=>{
+      const p=sh[k];if(p==null)return;
+      const min=(1+MIN_EV)/p,just=1/p,mine=B?B[AK[k]]:null;
+      let v='';
+      if(mine!=null)v=' · tu casa '+mine.toFixed(2)+' '+(p<MIN_PROB?(mine>=min?'(cuota larga, no se marca)':'✗'):mine>=min?'✓ merece la pena':mine>=just?'≈ sin ventaja suficiente':'✗ por debajo de lo justo');
+      L.push(t+': justa '+just.toFixed(2)+' · mínima '+min.toFixed(2)+v);
+    });
+    if(mc&&!B)L.push('Tu casa no tiene cuotas en este partido.');
+    mcBox.textContent='Cuota mínima = la que da un '+(MIN_EV*100)+'% de ventaja sobre Pinnacle. Si tu casa paga menos, déjala pasar.\n'+L.join('\n');
+  };
+  sel.onchange=()=>{localStorage.setItem('micasa',sel.value);pintaMC()};
+  pintaMC();
+  box.append(sel,mcBox);
   let n=0,aisl=0,larg=0;
   rows.forEach(([t,k,x])=>{
     const pm=M[k],ps=sh?sh[k]:null,p=ps!=null?ps:pm,ev=p*x.cuota-1,kel=Math.max(0,Math.min(.03,ev/(x.cuota-1)*.25));
