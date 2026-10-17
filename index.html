@@ -273,7 +273,7 @@ const BUSCA='Eres un analista de datos de fútbol. Busca en la web y responde en
 const REGLAS='Eres un analista de fútbol prudente. Responde en español, claro y en máximo 8 líneas. Usa SOLO los datos JSON del partido. Si incluyen informes o bajas obtenidos de la web, úsalos pero avisa de que no están verificados. Propón un mercado (1X2, doble oportunidad, más/menos goles, ambos marcan, hándicap) únicamente si al menos dos datos concretos lo respaldan, y cítalos (xG, goles, local/visitante, bajas). Si los datos no bastan o faltan, dilo en vez de forzar una apuesta. Si el JSON incluye cuotas, compara la probabilidad implícita del mercado con lo que respaldan los datos y señala dónde podría haber valor, sin prometer nada. Si no hay cuotas ni las da el usuario, aclara que no puedes saber si hay valor, solo si los datos lo respaldan. Nunca hables de apuestas seguras ni prometas ganancias.';
 
 /* ---------- Sofascore ---------- */
-async function sfc(f){try{const r=await fetch('/api/sofascore?home='+encodeURIComponent(f.home.name)+'&away='+encodeURIComponent(f.away.name));if(!r.ok)return null;const j=await r.json();return j.error?null:j}catch{return null}}
+async function sfc(f){try{let D=cget('sf',HR);if(!D){const r=await fetch('/data/sofascore.json');if(!r.ok)return null;D=await r.json();cset('sf',D)}const a=findTeam(D.teams||{},f.home.name),b=findTeam(D.teams||{},f.away.name);return a&&b?{home:a,away:b}:null}catch{return null}}
 
 /* ---------- modelo Poisson ---------- */
 const pois=(l,k)=>{let p=Math.exp(-l);for(let i=1;i<=k;i++)p*=l/i;return p};
