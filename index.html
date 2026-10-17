@@ -69,6 +69,10 @@ h3{font:700 20px "Barlow Condensed";margin:18px 0 6px;color:var(--acc);letter-sp
 .od b{display:block;font:700 26px/1.1 "Barlow Condensed";color:var(--acc)}
 .od span{display:block;font-size:12px;color:var(--mut)}
 footer{color:#6F8578;font-size:13px;margin-top:28px}
+.adv{white-space:pre-line}
+.vr{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin:6px 0;font-size:14px}
+.vr.ok{border-color:var(--home);box-shadow:inset 3px 0 0 var(--home)}
+.vr button{margin-top:6px}
 @media (prefers-reduced-motion:reduce){.vb i,.sk,.go::after{transition:none;animation:none}}
 </style>
 </head>
@@ -81,6 +85,7 @@ footer{color:#6F8578;font-size:13px;margin-top:28px}
 <label>Grok (opcional)<input id="k3" type="password" autocomplete="off" placeholder="Pega tu clave"></label>
 <label>Modelo de Grok (opcional, si sabes cuál usar)<input id="k4" autocomplete="off" placeholder="Ej: grok-4"></label>
 <label>The Odds API (cuotas, opcional)<input id="k5" type="password" autocomplete="off" placeholder="Pega tu clave"></label>
+<label>Tu banca en € (para calcular el stake, opcional)<input id="k6" inputmode="decimal" autocomplete="off" placeholder="Ej: 500"></label>
 <button class="chip dk" id="save">Guardar</button>
 <p class="msg">Se guardan solo en este navegador. Nunca las subas a GitHub.</p>
 </details>
@@ -154,6 +159,15 @@ async function previa(f,code){
     Object.assign(out.stats.home,{xg:uh.l5.xg,xga:uh.l5.xga,xgLoc:uh.h.xg,xgaLoc:uh.h.xga});
     Object.assign(out.stats.away,{xg:ua.l5.xg,xga:ua.l5.xga,xgLoc:ua.a.xg,xgaLoc:ua.a.xga});
     out.fuenteXg='Understat';
+  }
+  const sf=await sfc(f);
+  if(sf){
+    out.sf=sf;
+    if(!out.fuenteXg&&sf.home.xg!=null&&sf.away.xg!=null){
+      Object.assign(out.stats.home,{xg:sf.home.xg,xga:sf.home.xga,xgLoc:sf.home.xg,xgaLoc:sf.home.xga});
+      Object.assign(out.stats.away,{xg:sf.away.xg,xga:sf.away.xga,xgLoc:sf.away.xg,xgaLoc:sf.away.xga});
+      out.fuenteXg='Sofascore (últimos 5)';
+    }
   }
   out.ai=await gem(`Resume en español, en máximo 5 líneas, la previa de ${f.home.name} vs ${f.away.name} usando SOLO estos datos. Destaca tendencias. No des marcador exacto ni recomiendes apuestas.\n${JSON.stringify(out)}`);
   if(!gem.fail)cset('p1:'+f.id,out);return out;
@@ -258,14 +272,103 @@ async function ia(text,sys,web){
 const BUSCA='Eres un analista de datos de fútbol. Busca en la web y responde en español. No inventes cifras: si no encuentras un dato escribe "no encontrado". Indica la fuente y la fecha de los datos importantes. No des apuestas ni marcador.';
 const REGLAS='Eres un analista de fútbol prudente. Responde en español, claro y en máximo 8 líneas. Usa SOLO los datos JSON del partido. Si incluyen informes o bajas obtenidos de la web, úsalos pero avisa de que no están verificados. Propón un mercado (1X2, doble oportunidad, más/menos goles, ambos marcan, hándicap) únicamente si al menos dos datos concretos lo respaldan, y cítalos (xG, goles, local/visitante, bajas). Si los datos no bastan o faltan, dilo en vez de forzar una apuesta. Si el JSON incluye cuotas, compara la probabilidad implícita del mercado con lo que respaldan los datos y señala dónde podría haber valor, sin prometer nada. Si no hay cuotas ni las da el usuario, aclara que no puedes saber si hay valor, solo si los datos lo respaldan. Nunca hables de apuestas seguras ni prometas ganancias.';
 
+/* ---------- Sofascore ---------- */
+async function sfc(f){try{const r=await fetch('/api/sofascore?home='+encodeURIComponent(f.home.name)+'&away='+encodeURIComponent(f.away.name));if(!r.ok)return null;const j=await r.json();return j.error?null:j}catch{return null}}
+
+/* ---------- modelo Poisson ---------- */
+const pois=(l,k)=>{let p=Math.exp(-l);for(let i=1;i<=k;i++)p*=l/i;return p};
+const pOver=(l,line)=>{let c=0;for(let k=0;k<=Math.floor(line);k++)c+=pois(l,k);return 1-c};
+function modelo(s,sf){
+  const m=(a,b)=>a!=null&&b!=null?(a+b)/2:(a??b);
+  const att=x=>m(x.xgLoc??x.gfLoc,x.xg??x.gf5),def=x=>m(x.xgaLoc??x.gaLoc,x.xga??x.ga5);
+  let lh=m(att(s.home),def(s.away)),la=m(att(s.away),def(s.home));
+  if(lh==null||la==null||isNaN(lh)||isNaN(la))return null;
+  const aj=b=>{b=b||[];const o=b.filter(x=>x.pos==='F'||x.pos==='M').length,d=b.filter(x=>x.pos==='D'||x.pos==='G').length;return [Math.max(.9,1-.03*o),Math.min(1.08,1+.025*d),o+d]};
+  const A=aj(sf?.home?.bajas),B=aj(sf?.away?.bajas);
+  lh*=A[0]*B[1];la*=B[0]*A[1];
+  let h=0,d=0,a=0,o=0,o15=0,o35=0,bt=0;
+  for(let i=0;i<=8;i++)for(let j=0;j<=8;j++){const p=pois(lh,i)*pois(la,j);i>j?h+=p:i<j?a+=p:d+=p;if(i+j>2.5)o+=p;if(i+j>1.5)o15+=p;if(i+j>3.5)o35+=p;if(i&&j)bt+=p}
+  const t=h+d+a;
+  return {lh,la,h:h/t,d:d/t,a:a/t,o25:o/t,u25:1-o/t,o15:o15/t,o35:o35/t,btts:bt/t,aj:(A[2]+B[2])?A[2]+' local, '+B[2]+' visitante':''};
+}
+function sharp(O,f){
+  if(!O||!O.ev)return null;
+  const mp={};O.ev.forEach(e=>mp[e.home_team]=e);const ev=findTeam(mp,f.home.name);if(!ev)return null;
+  const b=ev.bookmakers.find(x=>x.key==='pinnacle');const h2=b&&b.markets.find(m=>m.key==='h2h');if(!h2)return null;
+  const g=n=>h2.outcomes.find(o=>o.name===n)?.price,h=g(ev.home_team),a=g(ev.away_team),d=g('Draw');if(!(h&&a&&d))return null;
+  const t=1/h+1/d+1/a,r={h:1/h/t,d:1/d/t,a:1/a/t};
+  const tt=b.markets.find(m=>m.key==='totals'),o=tt&&tt.outcomes.find(x=>x.name==='Over'&&x.point===2.5),u=tt&&tt.outcomes.find(x=>x.name==='Under'&&x.point===2.5);
+  if(o&&u){const z=1/o.price+1/u.price;r.o25=1/o.price/z;r.u25=1/u.price/z}
+  return r;
+}
+
+/* ---------- apuestas registradas ---------- */
+const bets=()=>{try{return JSON.parse(localStorage.getItem('bets'))||[]}catch{return[]}},svb=b=>localStorage.setItem('bets',JSON.stringify(b));
+function apuestas(){
+  list.replaceChildren();const B=bets(),box=h('div','grp');box.style.padding='16px';
+  const done=B.filter(b=>b.res),st=done.reduce((s,b)=>s+b.stake,0),pf=done.reduce((s,b)=>s+(b.res==='G'?b.stake*(b.odd-1):b.res==='P'?-b.stake:0),0);
+  const cl=B.filter(b=>b.close),clv=cl.length?cl.reduce((s,b)=>s+(b.odd/b.close-1),0)/cl.length:null;
+  box.append(h('p','adv',`Registradas: ${B.length} · resueltas: ${done.length}\nBeneficio: ${pf.toFixed(2)} · ROI: ${st?(pf/st*100).toFixed(1)+'%':'n/d'}\nCLV medio: ${clv!=null?(clv*100).toFixed(1)+'%':'n/d (anota la cuota de cierre de cada apuesta)'}\nCLV positivo sostenido es la mejor señal de que tu método tiene ventaja real.`));
+  if(!B.length)box.append(h('div','msg','Aún no has registrado ninguna. Pulsa "Registrar" en una apuesta con valor.'));
+  B.slice().reverse().forEach(b=>{
+    const r=h('div','vr');r.append(h('span',null,`${b.m} · ${b.mk} @${b.odd.toFixed(2)} · stake ${b.stake} · ${b.res==='G'?'✅ ganada':b.res==='P'?'❌ perdida':b.res==='N'?'nula':'pendiente'}`));
+    const bx=h('div','qa');
+    [['G','Ganada'],['P','Perdida'],['N','Nula']].forEach(([v,t])=>{const x=h('button','chip dk',t);x.onclick=()=>{b.res=v;svb(B);apuestas()};bx.append(x)});
+    const ci=h('input');ci.placeholder='Cuota de cierre';ci.value=b.close||'';ci.onchange=()=>{b.close=parseFloat(ci.value.replace(',','.'))||null;svb(B);apuestas()};
+    const del=h('button','chip dk','Borrar');del.onclick=()=>{B.splice(B.indexOf(b),1);svb(B);apuestas()};bx.append(del);
+    r.append(bx,ci);box.append(r);
+  });
+  list.append(box);
+}
+
+/* ---------- panel de modelo + valor ---------- */
+function pintaModelo(box,M,sf,cu,sh,f){
+  const pc=x=>(x*100).toFixed(0)+'%';
+  box.append(h('h3',null,'Modelo Poisson'));
+  if(!M){box.append(h('div','adv','Faltan datos de goles o xG para calcular el modelo.'));return}
+  const g=h('div','odds');
+  [['1 Local',M.h],['X Empate',M.d],['2 Visitante',M.a],['Más 2,5',M.o25],['Ambos marcan',M.btts],['Más 3,5',M.o35]].forEach(([t,x])=>{const c=h('div','od');c.append(h('b',null,pc(x)),h('span',null,t),h('span',null,'cuota justa '+(1/x).toFixed(2)));g.append(c)});
+  box.append(g,h('div','adv',`Goles esperados: ${M.lh.toFixed(2)} – ${M.la.toFixed(2)}`+(M.aj?`\nAjuste por bajas (heurístico): ${M.aj}.`:'')));
+  if(sf){
+    const H=sf.home,A=sf.away,l=[];
+    const co=[H.cf,A.ca,A.cf,H.ca].every(x=>x!=null)?(H.cf+A.ca)/2+(A.cf+H.ca)/2:null,ta=H.cards!=null&&A.cards!=null?H.cards+A.cards:null;
+    if(co)l.push(`Córners esperados ${co.toFixed(1)} · más de 9,5: ${pc(pOver(co,9))} (cuota justa ${(1/pOver(co,9)).toFixed(2)})`);
+    if(ta)l.push(`Amarillas esperadas ${ta.toFixed(1)} · más de 4,5: ${pc(pOver(ta,4))} (cuota justa ${(1/pOver(ta,4)).toFixed(2)})`);
+    const bj=k=>(sf[k].bajas||[]).map(b=>b.n+' ('+b.pos+')').join(', ')||'ninguna';
+    l.push('Bajas (Sofascore) · '+corto(f.home.name)+': '+bj('home')+' · '+corto(f.away.name)+': '+bj('away'));
+    box.append(h('div','adv',l.join('\n')+'\nCórners y tarjetas: Poisson sobre los últimos 5 de cada equipo, orientativo; compáralo con la cuota de tu casa.'));
+  }
+  box.append(h('h3',null,'Valor'));
+  if(!cu){box.append(h('div','adv','Sin cuotas no se puede calcular el valor.'));return}
+  const banca=parseFloat(ls('banca').replace(',','.'))||0,rows=[['1 Local','h',cu.local],['X Empate','d',cu.empate],['2 Visitante','a',cu.visitante]];
+  if(cu.mas25)rows.push(['Más 2,5','o25',cu.mas25],['Menos 2,5','u25',cu.menos25]);
+  let n=0;
+  rows.forEach(([t,k,x])=>{
+    const pm=M[k],ps=sh?sh[k]:null,p=ps!=null?.4*pm+.6*ps:pm,ev=p*x.cuota-1,kel=Math.max(0,Math.min(.03,ev/(x.cuota-1)*.25)),val=ev>.05&&(ps==null||pm>ps);
+    const r=h('div','vr'+(val?' ok':''));
+    r.append(h('span',null,`${t} @${x.cuota.toFixed(2)} · modelo ${pc(pm)}`+(ps!=null?` · Pinnacle ${pc(ps)}`:'')+` · EV ${(ev*100).toFixed(1)}%`));
+    if(val){
+      n++;const stake=banca?+(banca*kel).toFixed(2):1;
+      r.append(h('div',null,'Valor. Stake sugerido (¼ Kelly, máx. 3%): '+(banca?stake+' €':'1 unidad; pon tu banca en "Claves"')));
+      const b=h('button','chip dk','Registrar');b.onclick=()=>{const B=bets();B.push({m:corto(f.home.name)+' vs '+corto(f.away.name),mk:t,odd:x.cuota,stake,res:null,close:null});svb(B);b.textContent='Guardada';b.disabled=true};r.append(b);
+    }
+    box.append(r);
+  });
+  box.append(h('div','adv',(n?'Marcado = EV superior al 5% y el modelo supera a Pinnacle. ':'Ningún mercado supera el 5% de EV: lo normal es no apostar. ')+(sh?'La probabilidad usada mezcla 40% modelo y 60% Pinnacle sin margen, para no fiarse de un modelo sencillo.':'Sin Pinnacle disponible se usa solo el modelo, así que el EV es poco fiable.')));
+  const kmv='mv:'+f.id,prev=cget(kmv,14*864e5);
+  if(prev)['local','empate','visitante'].forEach(k=>{const d=cu[k].cuota/prev[k]-1;if(Math.abs(d)>=.05)box.append(h('div','adv','⚠ Cuota '+k+' '+(d>0?'sube':'baja')+' un '+Math.abs(d*100).toFixed(0)+'% desde tu última consulta.'))});
+  cset(kmv,{local:cu.local.cuota,empate:cu.empate.cuota,visitante:cu.visitante.cuota});
+}
+
 /* ---------- interfaz ---------- */
-const cfg=document.getElementById('cfg'),K=[1,2,3,4,5].map(n=>document.getElementById('k'+n)),KS=['fdkey','gmkey','xkey','xmodel','oddskey'];
+const cfg=document.getElementById('cfg'),K=[1,2,3,4,5,6].map(n=>document.getElementById('k'+n)),KS=['fdkey','gmkey','xkey','xmodel','oddskey','banca'];
 KS.forEach((k,i)=>K[i].value=ls(k));if(!ls('fdkey'))cfg.open=true;
 document.getElementById('save').onclick=()=>{KS.forEach((k,i)=>localStorage.setItem(k,K[i].value.trim()));cfg.open=false};
 const chips=document.getElementById('chips'),list=document.getElementById('list');
 const pulsar=btn=>chips.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c===btn));
 LIGAS.forEach(([n,code])=>{const b=h('button','chip',n);b.setAttribute('aria-pressed','false');b.onclick=()=>load(code,b);chips.append(b)});
 const ob=h('button','chip','Otras ligas y partido libre');ob.setAttribute('aria-pressed','false');ob.onclick=()=>{pulsar(ob);libre()};chips.append(ob);
+const mb=h('button','chip','Mis apuestas');mb.setAttribute('aria-pressed','false');mb.onclick=()=>{pulsar(mb);apuestas()};chips.append(mb);
 
 const corto=n=>n.replace(/\s+(A?FC|CF)$/,'').replace(/ & Hove Albion/,'').replace(/Wolverhampton Wanderers/,'Wolves');
 async function load(code,btn){
@@ -345,7 +448,9 @@ async function detail(f,box){
       if(cu.mas25){const o2=h('div','odds');o2.style.gridTemplateColumns='1fr 1fr';[['Más de 2,5',cu.mas25],['Menos de 2,5',cu.menos25]].forEach(([t,x])=>{const c=h('div','od');c.append(h('b',null,x.cuota.toFixed(2)),h('span',null,t),h('span',null,'mercado: '+x.prob+'%'));o2.append(c)});box.append(o2)}
       box.append(h('div','adv','Mejor cuota entre '+cu.casas+' casas. El % es la probabilidad que descuenta el mercado, sin margen.'+(O.rest?' Créditos restantes este mes: '+O.rest+'.':'')));
     }else box.append(h('div','adv',!ls('oddskey')?'Añade tu clave de The Odds API en "Claves" para ver las cuotas.':(O&&O.error)?'Cuotas no disponibles: '+O.error:'No encontré cuotas para este partido (puede que aún no estén publicadas).'));
-    const ctx={partido:f.home.name+' (local) vs '+f.away.name+' (visitante)',datos:s,cuotas:cu,leyenda:'gf/ga = goles por partido de la temporada; gfLoc/gaLoc = del local en casa o del visitante fuera; gf5/ga5 y form = últimos 5 partidos; xg/xga = últimos 5 (Understat); xgLoc/xgaLoc = temporada como local en casa o visitante fuera.'};
+    const M=modelo(s,d.sf),sh=sharp(O,f);
+    pintaModelo(box,M,d.sf,cu,sh,f);
+    const ctx={partido:f.home.name+' (local) vs '+f.away.name+' (visitante)',datos:s,cuotas:cu,modeloPoisson:M,pinnacle:sh,bajasSofascore:d.sf?{local:d.sf.home.bajas,visitante:d.sf.away.bajas}:null,leyenda:'gf/ga = goles por partido de la temporada; gfLoc/gaLoc = del local en casa o del visitante fuera; gf5/ga5 y form = últimos 5 partidos; xg/xga = últimos 5 (Understat); xgLoc/xgaLoc = temporada como local en casa o visitante fuera.'};
     if(d.ai)box.append(h('h3',null,'Resumen'),h('div','ai',d.ai));
     box.append(h('h3',null,'Bajas'));
     const bb=h('button','chip dk','Buscar bajas con IA'),bo=h('div','ai');bo.hidden=true;
