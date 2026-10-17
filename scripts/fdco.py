@@ -23,8 +23,8 @@ EXTRA = ['B1', 'T1', 'G1', 'SC0', 'E1']          # ligas "blandas" para comparar
 NOMBRE = {'E0': 'Premier', 'SP1': 'La Liga', 'D1': 'Bundesliga', 'I1': 'Serie A', 'F1': 'Ligue 1', 'N1': 'Eredivisie',
           'P1': 'Liga Portugal', 'B1': 'Bélgica', 'T1': 'Turquía', 'G1': 'Grecia', 'SC0': 'Escocia', 'E1': 'Championship'}
 FDCODE = {'E0': 'PL', 'SP1': 'PD', 'D1': 'BL1', 'I1': 'SA', 'F1': 'FL1', 'N1': 'DED', 'P1': 'PPL'}
-ACTUAL, HIST = '2627', ['2324', '2425', '2526']
-EVAL = {'2425', '2526'}
+ACTUAL, HIST = '2627', ['2122', '2223', '2324', '2425', '2526']
+EVAL = {'2223', '2324', '2425', '2526'}
 XI = 0.0025          # decaimiento por día (un partido de hace 1 año pesa ~40%)
 BLOQUE = 28          # días entre reajustes en el walk-forward
 VENTANA = 1100       # días máximos de historia para ajustar
@@ -109,7 +109,8 @@ def fila(r, temporada):
         return None
     hg, ag = int(float(r['FTHG'])), int(float(r['FTAG']))
     return dict(d=d, s=temporada, h=r['HomeTeam'], a=r['AwayTeam'], hg=hg, ag=ag,
-                ps=trio(r, 'PS'), pc=trio(r, 'PSC'), best=mejor_pre(r), b365=trio(r, 'B365'))
+                ps=trio(r, 'PS'), pc=trio(r, 'PSC'), best=mejor_pre(r), b365=trio(r, 'B365'),
+                libros=[x for x in (trio(r, b) for b in ('B365', 'BW', 'IW', 'WH', 'VC')) if x])
 
 
 # ---------------------------------------------------------------- Dixon-Coles
@@ -173,12 +174,29 @@ def predecir(M, H, A):
 
 
 # ---------------------------------------------------------------- backtest
+REGLA = 'Regla de la app: >5% y al menos 3 casas por encima de lo justo'
+
+
+def regla_app(i, c):
+    """Misma regla que la app: la mejor cuota de las casas conocidas paga >5% sobre Pinnacle (pre) y >=3 casas pagan más de lo justo."""
+    ps = c['pps'][i]
+    ok = [b[i] for b in c['libros'] if b[i] * ps - 1 > 0]
+    if len(ok) >= 3 and max(ok) * ps - 1 > 0.05:
+        return max(ok)
+    return None
+
+
+def _si(cond, price):
+    return price if cond else None
+
+
 ESTRAT = [
-    ('Mejor cuota vs Pinnacle (pre) >5%', lambda i, c: c['best'][i] * c['pps'][i] - 1 > 0.05),
-    ('Mejor cuota vs Pinnacle (pre) >2%', lambda i, c: c['best'][i] * c['pps'][i] - 1 > 0.02),
-    ('Solo Bet365 vs Pinnacle (pre) >3%', lambda i, c: c['b365'] is not None and c['b365'][i] * c['pps'][i] - 1 > 0.03),
-    ('Mejor cuota >5% y el modelo coincide', lambda i, c: c['dc'] is not None and c['best'][i] * c['pps'][i] - 1 > 0.05 and c['dc'][i] > c['pps'][i]),
-    ('Solo el modelo (EV>5% vs mejor cuota)', lambda i, c: c['dc'] is not None and c['dc'][i] * c['best'][i] - 1 > 0.05),
+    (REGLA, regla_app),
+    ('Regla de la app y el modelo coincide', lambda i, c: regla_app(i, c) if c['dc'] is not None and c['dc'][i] > c['pps'][i] else None),
+    ('Mejor cuota (columna Max) vs Pinnacle (pre) >5%', lambda i, c: _si(c['best'][i] * c['pps'][i] - 1 > 0.05, c['best'][i])),
+    ('Mejor cuota (columna Max) vs Pinnacle (pre) >2%', lambda i, c: _si(c['best'][i] * c['pps'][i] - 1 > 0.02, c['best'][i])),
+    ('Solo Bet365 vs Pinnacle (pre) >3%', lambda i, c: _si(c['b365'] is not None and c['b365'][i] * c['pps'][i] - 1 > 0.03, c['b365'][i] if c['b365'] else None)),
+    ('Solo el modelo (EV>5% vs mejor cuota)', lambda i, c: _si(c['dc'] is not None and c['dc'][i] * c['best'][i] - 1 > 0.05, c['best'][i])),
 ]
 
 
@@ -189,8 +207,8 @@ def nuevo():
 def acumular(S, c):
     for nom, f in ESTRAT:
         for i in range(3):
-            if f(i, c):
-                price = c['best'][i] if 'Bet365' not in nom else c['b365'][i]
+            price = f(i, c)
+            if price:
                 ret = price - 1 if c['out'][i] else -1.0
                 clv = price * c['pc'][i] - 1
                 a = S[nom]; a[0] += 1; a[1] += ret; a[2] += ret * ret; a[3] += clv; a[4] += clv * clv
@@ -223,7 +241,7 @@ def backtest(datos):
             if not (m['ps'] and m['pc'] and m['best']):
                 continue
             out = [1, 0, 0] if m['hg'] > m['ag'] else [0, 1, 0] if m['hg'] == m['ag'] else [0, 0, 1]
-            c = dict(best=m['best'], b365=m['b365'], pps=nov(m['ps']), pc=nov(m['pc']), out=out, dc=predecir(modelo, m['h'], m['a']))
+            c = dict(best=m['best'], b365=m['b365'], libros=m['libros'], pps=nov(m['ps']), pc=nov(m['pc']), out=out, dc=predecir(modelo, m['h'], m['a']))
             if c['dc'] is not None:
                 B['n'] += 1
                 for k, pr in (('m', c['dc']), ('p', c['pps']), ('c', c['pc'])):
@@ -272,7 +290,7 @@ def main():
                    brier={'modelo': round(B['bm'] / n, 4), 'pinnacle_pre': round(B['bp'] / n, 4), 'pinnacle_cierre': round(B['bc'] / n, 4)},
                    logloss={'modelo': round(B['lm'] / n, 4), 'pinnacle_pre': round(B['lp'] / n, 4), 'pinnacle_cierre': round(B['lc'] / n, 4)},
                    estrategias=[dict(nombre=k, **resumen(v)) for k, v in S.items()],
-                   por_liga=[dict(liga=NOMBRE.get(l, l), **resumen(SL[ESTRAT[0][0]])) for l, SL in PL.items()])
+                   por_liga=[dict(liga=NOMBRE.get(l, l), **resumen(SL[REGLA])) for l, SL in PL.items()])
         json.dump(rep, open(os.path.join(OUT, 'backtest.json'), 'w'), ensure_ascii=False)
         print(f"BACKTEST walk-forward. Brier (menor=mejor): modelo {rep['brier']['modelo']} | Pinnacle pre {rep['brier']['pinnacle_pre']} | Pinnacle cierre {rep['brier']['pinnacle_cierre']}")
         for e in rep['estrategias']:
